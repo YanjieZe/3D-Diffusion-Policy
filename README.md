@@ -75,10 +75,10 @@ For more detailed arguments, please refer to the scripts and the code. We here p
     ```bash
     bash scripts/train_policy.sh dp3 adroit_hammer_pointcloud 0112 0 0
     ```
-    This will train a DP3 policy on the `hammer` task in Adroit environment using point cloud modality. By default we do not save the ckpt (optional in the script).
+    This will train a DP3 policy on the `hammer` task in Adroit environment using point cloud modality. By default we **save** the ckpt (optional in the script).
 
 
-3. Evaluate a saved policy or use it for inference. For example:
+3. Evaluate a saved policy or use it for inference. Please set  For example:
     ```bash
     bash scripts/eval_policy.sh dp3 adroit_hammer_pointcloud 0112 0 0
     ```
