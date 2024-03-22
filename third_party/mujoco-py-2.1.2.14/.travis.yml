@@ -1,0 +1,8 @@
+language: generic
+
+before_install:
+- curl $MUJOCO_FOR_LINUX | tar -xz ./mjkey.txt
+- docker build -t image-under-test .
+
+script:
+- docker run --rm image-under-test

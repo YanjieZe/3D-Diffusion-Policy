@@ -1,0 +1,44 @@
+work_dir: '.'
+hydra:
+    run:
+        dir: ${work_dir}
+seed: 1
+
+# Environment 
+env: hammer-v0
+from_pixels: True
+hybrid_state: True
+stack_frames: False
+encoder_type: resnet34
+cam1: top 
+cam2:
+cam3:
+
+# Algorithm
+algorithm: DAPG
+
+num_cpu: 2
+save_freq: 25
+eval_rollouts: 25
+
+# BC parameters
+demo_file     :   demo-file-location 
+bc_batch_size :   32
+bc_epochs     :   5
+bc_learn_rate :   1e-3
+
+# RL parameters (all params related to PG, value function, DAPG etc.)
+
+policy_size   :   256, 256
+vf_batch_size :   64
+vf_epochs     :   2
+vf_learn_rate :   1e-3
+rl_step_size  :   0.05
+rl_gamma      :   0.995
+rl_gae        :   0.97
+rl_num_traj   :   200
+rl_num_iter   :   200
+lam_0         :   1e-2
+lam_1         :   0.95
+
+output: ${env}_${algorithm}_${encoder_type}_${cam1}_${seed}

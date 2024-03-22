@@ -1,0 +1,41 @@
+# general outputs
+job_name          : 'hydra_npg_test'
+
+# general inputs
+env               :   Hopper-v3
+algorithm         :   NPG
+seed              :   123
+sample_mode       :   samples
+rl_num_samples    :   1000
+rl_num_traj       :   0
+rl_num_iter       :   2
+num_cpu           :   4
+save_freq         :   5
+eval_rollouts     :   0
+exp_notes         :  'Example config for training policy with NPG on the OpenAI gym Hopper-v3 task.'
+
+# RL parameters (all params related to PG, value function etc.)
+policy_size       :   (32, 32)
+init_log_std      :   -0.5
+vf_hidden_size    :   (128, 128)
+vf_batch_size     :   64
+vf_epochs         :   2
+vf_learn_rate     :   1e-3
+rl_step_size      :   0.05
+rl_gamma          :   0.995
+rl_gae            :   0.97
+
+# Algorithm hyperparameters : if alg requires additional params, can be specified here (or defaults will be used)
+
+alg_hyper_params  :   {}
+
+hydra:
+          launcher:
+                      cpus_per_task: 12
+                      gpus_per_node: 0
+                      tasks_per_node: 1
+          run:
+                      dir: ./outputs/${hydra.job.name}/${now:%Y-%m-%d_%H-%M-%S}
+          sweep:
+                      dir: /checkpoint/${env:USER}/outputs/${job_name}/${now:%Y-%m-%d}_${now:%H-%M-%S}
+                      subdir: ${hydra.job.num}_${hydra.job.override_dirname}

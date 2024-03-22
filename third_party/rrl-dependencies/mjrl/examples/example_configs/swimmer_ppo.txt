@@ -1,0 +1,32 @@
+{
+
+# general inputs
+
+'env'               :   'mjrl_swimmer-v0',
+'algorithm'         :   'PPO',
+'seed'              :   123,
+'sample_mode'       :   'trajectories',
+'rl_num_traj'       :   10,
+'rl_num_iter'       :   50,
+'num_cpu'           :   2,
+'save_freq'         :   25,
+'eval_rollouts'     :   None,
+'exp_notes'         :   'Example config for training policy with PPO on the mjrl swimmer task.',
+
+# RL parameters (all params related to PG, value function, DAPG etc.)
+
+'policy_size'       :   (32, 32),
+'init_log_std'      :   -0.5,
+'vf_hidden_size'    :   (128, 128),
+'vf_batch_size'     :   64,
+'vf_epochs'         :   2,
+'vf_learn_rate'     :   1e-3,
+'rl_step_size'      :   0.1,
+'rl_gamma'          :   0.995,
+'rl_gae'            :   0.97,
+
+# Algorithm hyperparameters : if alg requires additional params, can be specified here (or defaults will be used)
+
+'alg_hyper_params'  :   dict(clip_coef=0.2, epochs=10, mb_size=64, learn_rate=5e-4),
+
+}

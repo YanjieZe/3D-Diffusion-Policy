@@ -1,0 +1,33 @@
+{
+
+# general inputs
+
+'env'               :   'Hopper-v3',
+'algorithm'         :   'NPG',
+'seed'              :   123,
+'sample_mode'       :   'samples',
+'rl_num_samples'    :   10000,
+'rl_num_iter'       :   100,
+'num_cpu'           :   1,
+'save_freq'         :   25,
+'eval_rollouts'     :   None,
+'exp_notes'         :   'Example config for training policy with NPG on the OpenAI gym Hopper-v3 task.',
+
+# RL parameters (all params related to PG, value function etc.)
+
+'policy_size'       :   (32, 32),
+'init_log_std'      :   -0.5,
+'vf_hidden_size'    :   (128, 128),
+'vf_batch_size'     :   64,
+'vf_epochs'         :   2,
+'vf_learn_rate'     :   1e-3,
+'rl_step_size'      :   0.05,
+'rl_gamma'          :   0.995,
+'rl_gae'            :   0.97,
+
+# Algorithm hyperparameters : if alg requires additional params, can be specified here (or defaults will be used)
+
+'alg_hyper_params'  :   dict(),
+
+}
+

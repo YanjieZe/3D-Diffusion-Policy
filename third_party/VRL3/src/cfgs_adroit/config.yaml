@@ -1,0 +1,124 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
+# modified from DrQv2 config file
+
+defaults:
+  - _self_
+  - task: door
+
+task_name: ${task.task_name}
+# task settings
+debug: 0
+# frame_stack: in paper actually used 3 as default for adroit, however
+# it can take a lot more memory especially for relocate, and later ablation shows
+# frame_stack does not affect performance significantly in Adroit, so here we set it to 1.
+frame_stack: 1
+action_repeat: 2
+discount: 0.99
+# eval
+eval_every_frames: 50000
+eval_episodes: 25
+stage2_eval_every_frames: 5000
+stage2_eval_episodes: 5
+# snapshot
+save_snapshot: false
+# replay buffer
+replay_buffer_size: 1000000
+replay_buffer_num_workers: 4
+nstep: 3
+batch_size: 256
+# misc
+seed: 1
+device: cuda
+save_video: false
+save_train_video: false
+use_tb: false
+save_models: false
+local_data_dir: '/home/yanjieze/projects/human-for-dex/VRL3/src/vrl3data'
+show_computation_time_est: true # provide estimates on computation times
+show_time_est_interval: 2500
+# experiment
+experiment: exp
+# environment
+env_feature_type: 'pixels'
+use_sensor: true
+reward_rescale: true # TODO think about this...
+# agent
+lr: 1e-4
+feature_dim: 50
+
+# ====== stage 1 ======
+stage1_model_name: 'resnet6_32channel' # model name example: resnet6_32channel, resnet6_64channel, resnet10_32channel
+stage1_use_pretrain: true # if false then we start from scratch
+
+# ====== stage 2 ======
+load_demo: true
+num_demo: 25
+stage2_n_update: 30000
+
+# ====== stage 3 ======
+num_seed_frames: 0
+
+agent:
+  _target_: vrl3_agent.VRL3Agent
+  obs_shape: ??? # to be specified later
+  action_shape: ??? # to be specified later
+  device: ${device}
+  critic_target_tau: 0.01
+  update_every_steps: 2
+  use_tb: ${use_tb}
+  lr: 1e-4
+  hidden_dim: 1024
+  feature_dim: 50
+
+  # environment related
+  use_sensor: ${use_sensor}
+
+  # ====== stage 1 ======
+  stage1_model_name: ${stage1_model_name}
+
+  # ====== stage 2, 3 ======
+  use_data_aug: true
+  encoder_lr_scale: 1
+  stddev_clip: 0.3
+  # safe Q
+  safe_q_target_factor: 0.5 # value 1 is not using safe factor, value 0 is hard cutoff.
+  safe_q_threshold: 200
+  # pretanh penalty
+  pretanh_threshold: 5
+  pretanh_penalty: 0.001
+
+  # ====== stage 2 ======
+  stage2_update_encoder: true # decides whether encoder is frozen or finetune in stage 2
+  cql_weight: 1
+  cql_temp: 1
+  cql_n_random: 10
+  stage2_std: 0.1
+  stage2_bc_weight: 0 # ablation shows additional BC does not help performance
+
+  # ====== stage 3 ======
+  stage3_update_encoder: true
+  num_expl_steps: 0 # number of random actions at start of stage 3
+  # std decay
+  std0: 0.01
+  std1: 0.01
+  std_n_decay: 500000
+  # bc decay
+  stage3_bc_lam0: 0 # ablation shows additional BC does not help performance
+  stage3_bc_lam1: 0.95
+
+hydra:
+  run: # this "dir" decides where the training logs are stored
+    dir: /home/yanjieze/projects/human-for-dex/VRL3/src/vrl3data/logs/exp_local/${now:%Y.%m.%d}/${now:%H%M%S}_${hydra.job.override_dirname}
+  sweep:
+    dir: ./exp/${now:%Y.%m.%d}/${now:%H%M}_${agent_cfg.experiment}
+    subdir: ${hydra.job.num}
+  # launcher:
+  #   timeout_min: 4300
+  #   cpus_per_task: 10
+  #   gpus_per_node: 1
+  #   tasks_per_node: 1
+  #   mem_gb: 160
+  #   nodes: 1
+  #   submitit_folder: ./exp/${now:%Y.%m.%d}/${now:%H%M%S}_${agent_cfg.experiment}/.slurm

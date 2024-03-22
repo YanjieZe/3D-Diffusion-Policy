@@ -1,0 +1,40 @@
+name: dexart_laptop
+
+task_name: laptop
+
+shape_meta: &shape_meta
+  # acceptable types: rgb, low_dim
+  obs:
+    point_cloud:
+      shape: [1024, 3]
+      type: point_cloud
+    imagin_robot:
+      shape: [96, 7]
+      type: point_cloud
+    image:
+        shape: [3, 84, 84]
+        type: rgb
+    agent_pos:
+      shape: [32]
+      type: low_dim
+  action:
+    shape: [22]
+
+env_runner:
+  _target_: diffusion_policy_3d.env_runner.dexart_runner.DexArtRunner
+  n_train: 20
+  max_steps: 50
+  n_obs_steps: ${n_obs_steps}
+  n_action_steps: ${n_action_steps}
+  fps: 10
+  task_name: laptop
+
+dataset:
+  _target_: diffusion_policy_3d.dataset.dexart_dataset.DexArtDataset
+  zarr_path: data/dexart_laptop_expert.zarr
+  horizon: ${horizon}
+  pad_before: ${eval:'${n_obs_steps}-1'}
+  pad_after: ${eval:'${n_action_steps}-1'}
+  seed: 42
+  val_ratio: 0.02
+  max_train_episodes: 90

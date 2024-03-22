@@ -1,0 +1,40 @@
+name: adroit_pen
+
+task_name: pen
+
+image_shape: &image_shape [3, 84, 84]
+shape_meta: &shape_meta
+  # acceptable types: rgb, low_dim
+  obs:
+    # image:
+    #     shape: *image_shape
+    #     type: rgb
+    point_cloud:
+      shape: [512, 3]
+      type: point_cloud
+    agent_pos:
+      shape: [24]
+      type: low_dim
+  action:
+    shape: [24]
+
+env_runner:
+  _target_: diffusion_policy_3d.env_runner.adroit_runner.AdroitRunner
+  eval_episodes: 20
+  max_steps: 300
+  n_obs_steps: ${n_obs_steps}
+  n_action_steps: ${n_action_steps}
+  fps: 10
+  task_name: pen
+  render_size: 84
+  use_point_crop: ${policy.use_point_crop}
+
+dataset:
+  _target_: diffusion_policy_3d.dataset.adroit_dataset.AdroitDataset
+  zarr_path: data/adroit_pen_expert.zarr
+  horizon: ${horizon}
+  pad_before: ${eval:'${n_obs_steps}-1'}
+  pad_after: ${eval:'${n_action_steps}-1'}
+  seed: 42
+  val_ratio: 0.02
+  max_train_episodes: 90
