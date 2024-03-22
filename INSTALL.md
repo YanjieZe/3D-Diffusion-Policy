@@ -78,7 +78,7 @@ download Adroit RL experts from [OneDrive](https://1drv.ms/u/s!Ag5QsBIFtRnTlFWqY
 
 6.install pytorch3d (a simplified version)
 ```
-cd third_party/pytorch3d_simplified & pip install -e . & cd ..
+cd third_party/pytorch3d_simplified && pip install -e . && cd ..
 ```
 
 ---
