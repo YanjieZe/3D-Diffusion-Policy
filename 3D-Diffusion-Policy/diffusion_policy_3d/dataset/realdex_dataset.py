@@ -7,9 +7,9 @@ from diffusion_policy_3d.common.replay_buffer import ReplayBuffer
 from diffusion_policy_3d.common.sampler import (
     SequenceSampler, get_val_mask, downsample_mask)
 from diffusion_policy_3d.model.common.normalizer import LinearNormalizer, SingleFieldLinearNormalizer
-from diffusion_policy_3d.dataset.base_dataset import BasePointcloudDataset
+from diffusion_policy_3d.dataset.base_dataset import BaseDataset
 
-class RealDexPointcloudDataset(BasePointcloudDataset):
+class RealDexDataset(BaseDataset):
     def __init__(self,
             zarr_path, 
             horizon=1,

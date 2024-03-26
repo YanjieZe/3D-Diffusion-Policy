@@ -17,7 +17,7 @@ shape_meta: &shape_meta
 env_runner: null
 
 dataset:
-  _target_: diffusion_policy_3d.dataset.realdex_pointcloud_dataset.RealDexPointcloudDataset
+  _target_: diffusion_policy_3d.dataset.realdex_dataset.RealDexDataset
   zarr_path: data/realdex_drill.zarr
   horizon: ${horizon}
   pad_before: ${eval:'${n_obs_steps}-1'}
