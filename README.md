@@ -73,17 +73,49 @@ For more detailed arguments, please refer to the scripts and the code. We here p
 
 2. Train and evaluate a policy with behavior cloning. For example:
     ```bash
-    bash scripts/train_policy.sh dp3 adroit_hammer_pointcloud 0112 0 0
+    bash scripts/train_policy.sh dp3 adroit_hammer 0112 0 0
     ```
     This will train a DP3 policy on the `hammer` task in Adroit environment using point cloud modality. By default we **save** the ckpt (optional in the script).
 
 
 3. Evaluate a saved policy or use it for inference. Please set  For example:
     ```bash
-    bash scripts/eval_policy.sh dp3 adroit_hammer_pointcloud 0112 0 0
+    bash scripts/eval_policy.sh dp3 adroit_hammer 0112 0 0
     ```
     This will evaluate the saved DP3 policy you just trained.
 
+# 🤖 Real Robot
+
+**Hardware Setup**
+1. Franka Robot
+2. Allegro Hand
+3. L515 Realsense Camera
+4. Mounted connection base [[link](https://drive.google.com/file/d/1kg6yOFxVqP8azxPoXsuyig5DEQnAJjwC/view?usp=sharing)] (connect Franka with Allegro hand)
+5. Mounted finger tip [[link](https://github.com/yzqin/dexpoint-release/blob/main/assets/robot/allegro_hand_description/meshes/modified_tip.STL)]
+
+**Software**
+1. Ubuntu 20.04.01 (tested)
+2. [Franka Interface Control](https://frankaemika.github.io/docs/index.html) 
+3. [Frankx](https://github.com/pantor/frankx) (High-Level Motion Library for the Franka Emika Robot)
+4. [Allegro Hand Controller - Noetic](https://github.com/NYU-robot-learning/Allegro-Hand-Controller-DIME)
+
+
+Every collected real robot demonstration (episode length: T) is a dictionary:
+1. "point_cloud": Array of shape (T, Np, 6), Np is the number of point clouds, 6 denotes [x, y, z, r, g, b]
+2. "image": Array of shape (T, H, W, 3)
+3. "depth": Array of shape (T, H, W)
+4. "agent_pos": Array of shape (T, Nd), Nd is the action dim of the robot agent, i.e. 22 for our dexhand tasks (6d position of end effector + 16d joint position)
+5. "action": Array of shape (T, Nd), delta action of the robot agent
+
+For training and evaluation, you should process the point clouds (cropping using a bounding box and FPS downsampling) as described in the paper. We also provide an example script ([here](https://github.com/YanjieZe/3D-Diffusion-Policy/tree/master/scripts/convert_real_robot_data.py)). 
+
+You can try using our provided real world data to train the policy.
+1. Download the real robot data. Put the data under `3D-Diffusion-Policy/data/` folder, e.g. `3D-Diffusion-Policy/data/realdex_drill.zarr`, please keep the path the same as 'zarr_path' in the task's yaml file.
+2. Train the policy. For example:
+  ```bash
+    bash scripts/train_policy.sh dp3 realdex_drill 0112 0 0
+  ```
+   
 # 🔍 Visualizer
 We provide a simple visualizer to visualize point clouds for the convenience of debugging in headless machines. You could install it by
 ```bash
