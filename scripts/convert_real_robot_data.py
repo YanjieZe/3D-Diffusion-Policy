@@ -124,7 +124,6 @@ for demo_dir in demo_dirs:
     if not os.path.exists(pcd_dirs):
            os.makedirs(pcd_dirs)
         
-    print(type(demo), demo.keys(), type(demo['image']), demo['image'].shape, demo['point_cloud'].shape, demo["depth"].shape, demo['agent_pos'].shape, demo['action'].shape)
     demo_length = len(demo['point_cloud'])
     # dict_keys(['point_cloud', 'rgbd', 'agent_pos', 'action'])
     for step_idx in tqdm.tqdm(range(demo_length)):
