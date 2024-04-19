@@ -89,7 +89,7 @@ For more detailed arguments, please refer to the scripts and the code. We here p
 **Hardware Setup**
 1. Franka Robot
 2. Allegro Hand
-3. L515 Realsense Camera
+3. **L515** Realsense Camera (**Note: using the RealSense D435 camera might lead to failure of DP3 due to the very low quality of point clouds**)
 4. Mounted connection base [[link](https://drive.google.com/file/d/1kg6yOFxVqP8azxPoXsuyig5DEQnAJjwC/view?usp=sharing)] (connect Franka with Allegro hand)
 5. Mounted finger tip [[link](https://github.com/yzqin/dexpoint-release/blob/main/assets/robot/allegro_hand_description/meshes/modified_tip.STL)]
 
