@@ -101,7 +101,7 @@ For more detailed arguments, please refer to the scripts and the code. We here p
 
 
 Every collected real robot demonstration (episode length: T) is a dictionary:
-1. "point_cloud": Array of shape (T, Np, 6), Np is the number of point clouds, 6 denotes [x, y, z, r, g, b]
+1. "point_cloud": Array of shape (T, Np, 6), Np is the number of point clouds, 6 denotes [x, y, z, r, g, b]. **Note: it is highly suggested to crop out the table/background and only leave the useful point clouds in your observation, which demonstrates effectiveness in our real-world experiments.**
 2. "image": Array of shape (T, H, W, 3)
 3. "depth": Array of shape (T, H, W)
 4. "agent_pos": Array of shape (T, Nd), Nd is the action dim of the robot agent, i.e. 22 for our dexhand tasks (6d position of end effector + 16d joint position)
