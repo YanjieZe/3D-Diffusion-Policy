@@ -101,3 +101,25 @@ check by:
 strings /usr/lib/arm-linux-gnueabihf/libstdc++.so.6 | grep GLIBCXX
 ```
 
+- installing the third_party/gym-0.21.0 package when running with pip==24, leading to the following error:
+```
+  Preparing metadata (setup.py) ... error
+  error: subprocess-exited-with-error
+  
+  × python setup.py egg_info did not run successfully.
+  │ exit code: 1
+  ╰─> [1 lines of output]
+      error in gym setup command: 'extras_require' must be a dictionary whose values are strings or lists of strings containing valid project/version requirement specifiers.
+      [end of output]
+  
+  note: This error originates from a subprocess, and is likely not a problem with pip.
+error: metadata-generation-failed
+
+× Encountered error while generating package metadata.
+╰─> See above for output.
+
+note: This is an issue with the package mentioned above, not pip.
+hint: See above for details.
+```
+To solve this issue, run pip install pip==21 in addition to the setuptools downgrade already provided. See [Issue](https://github.com/YanjieZe/3D-Diffusion-Policy/issues/20)
+
