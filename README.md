@@ -82,7 +82,7 @@ For more detailed arguments, please refer to the scripts and the code. We here p
     ```bash
     bash scripts/eval_policy.sh dp3 adroit_hammer 0112 0 0
     ```
-    This will evaluate the saved DP3 policy you just trained.
+    This will evaluate the saved DP3 policy you just trained. **Note: the evaluation script is only provided for deployment/inference. For benchmarking, please use the results logged in wandb during training.**
 
 # 🤖 Real Robot
 
