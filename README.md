@@ -105,7 +105,7 @@ Every collected real robot demonstration (episode length: T) is a dictionary:
 2. "image": Array of shape (T, H, W, 3)
 3. "depth": Array of shape (T, H, W)
 4. "agent_pos": Array of shape (T, Nd), Nd is the action dim of the robot agent, i.e. 22 for our dexhand tasks (6d position of end effector + 16d joint position)
-5. "action": Array of shape (T, Nd), delta action of the robot agent
+5. "action": Array of shape (T, Nd). We use *relative end-effector position control* for the robot arm and *relative joint-angle position control* for the dex hand.
 
 For training and evaluation, you should process the point clouds (cropping using a bounding box and FPS downsampling) as described in the paper. We also provide an example script ([here](https://github.com/YanjieZe/3D-Diffusion-Policy/tree/master/scripts/convert_real_robot_data.py)). 
 
