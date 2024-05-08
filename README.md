@@ -55,7 +55,7 @@ You could generate demonstrations by yourself using our provided expert policies
 - Download Adroit RL experts from [OneDrive](https://1drv.ms/u/s!Ag5QsBIFtRnTlFWqYWtS2wMMPKNX?e=dw8hsS), unzip it, and put the `ckpts` folder under `$YOUR_REPO_PATH/third_party/VRL3/`.
 - Download DexArt assets from [Google Drive](https://drive.google.com/file/d/1JdReXZjMaqMO0HkZQ4YMiU2wTdGCgum1/view?usp=sharing) and put the `assets` folder under `$YOUR_REPO_PATH/third_party/dexart-release/`.
 
-
+**Note: since you are generating demonstrations by yourselves, the results could be slightly different from the results reported in the paper. This is normal since the results of imitation learning highly depend on the demonstration quality.** Please re-generate demonstrations if you encounter some not-good results and no need to open an issue.
 
 # 🛠️ Usage
 Scripts for generating demonstrations, training, and evaluation are all provided in the `scripts/` folder. 
