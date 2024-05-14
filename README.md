@@ -162,9 +162,10 @@ Contact [Yanjie Ze](https://yanjieze.com) if you have any questions or suggestio
 
 If you find our work useful, please consider citing:
 ```
-@article{Ze2024DP3,
+@inproceedings{Ze2024DP3,
 	title={3D Diffusion Policy: Generalizable Visuomotor Policy Learning via Simple 3D Representations},
 	author={Yanjie Ze and Gu Zhang and Kangning Zhang and Chenyuan Hu and Muhan Wang and Huazhe Xu},
-      	journal={arXiv preprint arXiv:2403.03954},
-  year={2024}}
+	booktitle={Proceedings of Robotics: Science and Systems (RSS)},
+	year={2024}
+}
 ```
