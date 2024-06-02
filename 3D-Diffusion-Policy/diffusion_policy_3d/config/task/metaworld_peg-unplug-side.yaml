@@ -1,0 +1,37 @@
+name: peg-unplug-side
+
+task_name: ${name}
+
+shape_meta: &shape_meta
+  obs:
+    point_cloud:
+      shape: [512, 3]
+      type: point_cloud
+    agent_pos:
+      shape: [9]
+      type: low_dim
+  action:
+    shape: [4]
+
+env_runner:
+  _target_: diffusion_policy_3d.env_runner.metaworld_runner.MetaworldRunner
+  eval_episodes: 20
+  n_obs_steps: ${n_obs_steps}
+  n_action_steps: ${n_action_steps}
+  fps: 10
+  n_envs: null
+  n_train: null
+  n_test: null
+  task_name: ${task_name}
+  device: ${training.device}
+  use_point_crop: ${policy.use_point_crop}
+
+dataset:
+  _target_: diffusion_policy_3d.dataset.metaworld_dataset.MetaworldDataset
+  zarr_path: data/metaworld_peg-unplug-side_expert.zarr
+  horizon: ${horizon}
+  pad_before: ${eval:'${n_obs_steps}-1'}
+  pad_after: ${eval:'${n_action_steps}-1'}
+  seed: 42
+  val_ratio: 0.02
+  max_train_episodes: 90

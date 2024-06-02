@@ -37,12 +37,3 @@ class LargestKRecorder:
         
         return sum(self.scalars) / len(self.scalars)
 
-# Example Usage:
-# recorder = EfficientScalarRecorder(K=5)
-# recorder.record(1)
-# recorder.record(2)
-# recorder.record(3)
-# recorder.record(4)
-# recorder.record(5)
-# recorder.record(6)
-# print(recorder.average_of_largest_K())  # Expected output: (6 + 5 + 4 + 3 + 2) / 5 = 4.0
