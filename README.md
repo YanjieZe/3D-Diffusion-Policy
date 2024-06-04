@@ -28,6 +28,10 @@
 
 **3D Diffusion Policy (DP3)** is a universal visual imitation learning algorithm that marries 3D visual representations with diffusion policies, achieving surprising effectiveness in diverse simulated and real-world tasks, including both high-dimensional and low-dimensional control tasks, with a practical inference speed.
 
+**Applications and extensions of DP3 from the community**:
+- [arXiv 2024.03](https://arxiv.org/abs/2403.20328), *Learning Visual Quadrupedal Loco-Manipulation from Demonstrations*, where DP3 is used as the high-level planner.
+- [arXiv 2024.06](https://arxiv.org/abs/2406.01586), *ManiCM: Real-time 3D Diffusion Policy via Consistency Model for Robotic Manipulation*, where DP3 is accelerated via consistency model.
+
 
 
 
