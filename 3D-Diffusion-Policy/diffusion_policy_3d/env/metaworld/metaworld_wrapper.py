@@ -122,6 +122,23 @@ class MetaWorldEnv(gym.Env):
         # cam names: ('topview', 'corner', 'corner2', 'corner3', 'behindGripper', 'gripperPOV')
         img = self.env.sim.render(width=self.image_size, height=self.image_size, camera_name="corner2", device_id=self.device_id)
         return img
+    
+    def get_ee_contact_forces(self):
+        '''
+        TODO: new functions, calculate contact force of gripper from mujoco based on contact locations
+        Arg(s):
+            None
+        Returns:
+            forces : np[(3, )]
+                Forces in xyz direction respectively
+        '''
+        forces = np.array([0, 0, 0])
+        return forces
+    
+    def render_compliant_image(self, contact_forces):
+        # TODO: from Yifan
+        compliant_image = np.random.rand(640, 480, 3)
+        return compliant_image
 
     def render_high_res(self, resolution=1024):
         img = self.env.sim.render(width=resolution, height=resolution, camera_name="corner2", device_id=self.device_id)
@@ -162,7 +179,11 @@ class MetaWorldEnv(gym.Env):
     def get_visual_obs(self):
         obs_pixels = self.get_rgb()
         robot_state = self.get_robot_state()
-        point_cloud, depth = self.get_point_cloud()
+        _, depth = self.get_point_cloud()
+
+        # add compliant gripper image
+        contact_forces = self.get_ee_contact_forces()
+        compliant_img = self.render_compliant_image(contact_forces)
         
         if obs_pixels.shape[0] != 3:
             obs_pixels = obs_pixels.transpose(2, 0, 1)
@@ -171,7 +192,7 @@ class MetaWorldEnv(gym.Env):
             'image': obs_pixels,
             'depth': depth,
             'agent_pos': robot_state,
-            'point_cloud': point_cloud,
+            'compliant image': compliant_img,
         }
         return obs_dict
             
