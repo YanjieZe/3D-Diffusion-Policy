@@ -123,3 +123,19 @@ hint: See above for details.
 ```
 To solve this issue, run pip install pip==21 in addition to the setuptools downgrade already provided. See [Issue](https://github.com/YanjieZe/3D-Diffusion-Policy/issues/20)
 
+
+- Error:
+
+        ImportError: cannot import name 'cached_download' from 'huggingface_hub' (~/mambaforge/envs/dp3/lib/python3.8/site-packages/huggingface_hub/__init__.py)
+  
+This is because only huggingface_hub lower than 0.26 supports cached_download, try lower version can be solved:
+
+    pip install huggingface_hub==0.25.2 
+
+- Error:
+
+        ERROR: Requested gym==0.21.0 from file:///~/3D-Diffusion-Policy/third_party/gym-0.21.0 has invalid metadata: Expected end or semicolon (after version specifier)
+            opencv-python>=3.
+                         ~~~^
+
+This is because no specific opencv-python version, go to 3D-Diffusion-Policy/third_party/gym-0.21.0/setup.py and line 20, add 0 at the end of opencv-python>=3. just like this [issue](https://github.com/YanjieZe/3D-Diffusion-Policy/issues/92)
