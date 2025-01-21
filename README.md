@@ -130,6 +130,7 @@ You can try using our provided real world data to train the policy.
   ```bash
     bash scripts/train_policy.sh dp3 realdex_drill 0112 0 0
   ```
+3. For real-world deployment code, you might refer to [iDP3](https://github.com/YanjieZe/Improved-3D-Diffusion-Policy) for a reference.
    
 # 🔍 Visualizer
 We provide a simple visualizer to visualize point clouds for the convenience of debugging in headless machines. You could install it by
