@@ -28,6 +28,10 @@
 
 **3D Diffusion Policy (DP3)** is a universal visual imitation learning algorithm that marries 3D visual representations with diffusion policies, achieving surprising effectiveness in diverse simulated and real-world tasks, including both high-dimensional and low-dimensional control tasks, with a practical inference speed.
 
+**Small tips for using DP3:**
+- Try [longer prediction horizon and action horizon](https://github.com/YanjieZe/3D-Diffusion-Policy/blob/b147695af3ecb90101745fe9778ade2f86f23a46/3D-Diffusion-Policy/diffusion_policy_3d/config/dp3.yaml#L10) e.g., 8/16/32, to get better results.
+- Try to use **global position** instead of relative position as **action space**.
+
 **Applications and extensions of DP3 from the community**:
 - [arXiv 2025.02](https://arxiv.org/abs/2502.16932), *DemoGen: Synthetic Demonstration Generation for Data-Efficient Visuomotor Policy Learning*, where DP3 can achieve great real-world abilities with generated demos.
 - [arXiv 2024.11](https://arxiv.org/abs/2411.09658), *Motion Before Action: Diffusing Object Motion as Manipulation Condition*, where DP3 shows improved effectiveness with a Motion-Before-Action module.
