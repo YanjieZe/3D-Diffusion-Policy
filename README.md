@@ -29,6 +29,7 @@
 **3D Diffusion Policy (DP3)** is a universal visual imitation learning algorithm that marries 3D visual representations with diffusion policies, achieving surprising effectiveness in diverse simulated and real-world tasks, including both high-dimensional and low-dimensional control tasks, with a practical inference speed.
 
 **Applications and extensions of DP3 from the community**:
+- [arXiv 2025.02](https://arxiv.org/abs/2502.16932), *DemoGen: Synthetic Demonstration Generation for Data-Efficient Visuomotor Policy Learning*, where DP3 can achieve great real-world abilities with generated demos.
 - [arXiv 2024.11](https://arxiv.org/abs/2411.09658), *Motion Before Action: Diffusing Object Motion as Manipulation Condition*, where DP3 shows improved effectiveness with a Motion-Before-Action module.
 - [arXiv 2024.10](https://arxiv.org/abs/2410.10803), *Generalizable Humanoid Manipulation with Improved 3D Diffusion Policies*, where improved DP3 shows effectiveness in humanoid manipulation tasks and impressive generalization abilities across scenes.
 - [arXiv 2024.09](https://arxiv.org/abs/2409.07163), *Mamba Policy: Towards Efficient 3D Diffusion Policy with Hybrid Selective State Models*, where the backbone of DP3 is replaced with the Mamba archiecture.
