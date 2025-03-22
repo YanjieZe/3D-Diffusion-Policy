@@ -33,6 +33,7 @@
 - Try to use **global position** instead of relative position as **action space**.
 
 **Applications and extensions of DP3 from the community**:
+- [arXiv 2025.03](https://arxiv.org/abs/2503.07511), *PointVLA: Injecting the 3D World into Vision-Language-Action Models*, where [iDP3 Encoder](https://github.com/YanjieZe/Improved-3D-Diffusion-Policy) is used in training a powerful 3D VLA.
 - [arXiv 2025.02](https://arxiv.org/abs/2502.16932), *DemoGen: Synthetic Demonstration Generation for Data-Efficient Visuomotor Policy Learning*, where DP3 can achieve great real-world abilities with generated demos.
 - [arXiv 2024.11](https://arxiv.org/abs/2411.09658), *Motion Before Action: Diffusing Object Motion as Manipulation Condition*, where DP3 shows improved effectiveness with a Motion-Before-Action module.
 - [arXiv 2024.10](https://arxiv.org/abs/2410.10803), *Generalizable Humanoid Manipulation with 3D Diffusion Policies*, where improved DP3 shows effectiveness in humanoid manipulation tasks and impressive generalization abilities across scenes.
