@@ -1,4 +1,4 @@
-name: pick-out-of-hole
+name: pick-place
 
 task_name: ${name}
 
