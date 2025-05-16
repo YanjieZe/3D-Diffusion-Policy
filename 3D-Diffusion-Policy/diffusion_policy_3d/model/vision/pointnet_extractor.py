@@ -250,7 +250,7 @@ class DP3Encoder(nn.Module):
             # Create Uni3D encoder with the provided config
             self.extractor = create_uni3d(args=pointcloud_encoder_cfg)
             
-            assert self.n_output_channels == 1024, "uni3d requires output channel to be 512"
+            assert self.n_output_channels == 1024, "uni3d requires output channel to be 1024"
         else:
             raise NotImplementedError(f"pointnet_type: {pointnet_type}")
 
