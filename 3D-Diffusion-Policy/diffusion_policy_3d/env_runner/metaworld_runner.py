@@ -3,6 +3,8 @@ import numpy as np
 import torch
 import collections
 import tqdm
+import imageio
+import os
 from diffusion_policy_3d.env import MetaWorldEnv
 from diffusion_policy_3d.gym_util.multistep_wrapper import MultiStepWrapper
 from diffusion_policy_3d.gym_util.video_recording_wrapper import SimpleVideoRecordingWrapper
@@ -59,7 +61,7 @@ class MetaworldRunner(BaseRunner):
         self.logger_util_test = logger_util.LargestKRecorder(K=3)
         self.logger_util_test10 = logger_util.LargestKRecorder(K=5)
 
-    def run(self, policy: BasePolicy, save_video=False):
+    def run(self, policy: BasePolicy, save_video=True):
         device = policy.device
         dtype = policy.dtype
 
@@ -67,6 +69,8 @@ class MetaworldRunner(BaseRunner):
         all_success_rates = []
         env = self.env
 
+        # Create an array to store videos from each episode
+        episode_videos = []
         
         for episode_idx in tqdm.tqdm(range(self.eval_episodes), desc=f"Eval in Metaworld {self.task_name} Pointcloud Env", leave=False, mininterval=self.tqdm_interval_sec):
             
@@ -103,6 +107,12 @@ class MetaworldRunner(BaseRunner):
             all_success_rates.append(is_success)
             all_traj_rewards.append(traj_reward)
             
+            # Get video from the environment after each episode
+            if save_video:
+                video = env.env.get_video()
+                if len(video.shape) == 5:
+                    video = video[0]  # select first frame
+                episode_videos.append(video)
 
         max_rewards = collections.defaultdict(list)
         log_data = dict()
@@ -125,6 +135,33 @@ class MetaworldRunner(BaseRunner):
             videos = videos[:, 0]  # select first frame
         
         if save_video:
+            video_dir = os.path.join(self.output_dir, 'videos')
+            os.makedirs(video_dir, exist_ok=True)
+            
+            # Save individual episodes
+            for i, episode_frames in enumerate(episode_videos):
+                if isinstance(episode_frames, np.ndarray):
+                    episode_path = os.path.join(video_dir, f'episode_{i}.mp4')
+                    frames = episode_frames.astype(np.uint8)
+                    
+                    # Ensure frames have the right shape for ffmpeg (T, H, W, C) with C = 1, 3 or 4
+                    if len(frames.shape) == 4 and frames.shape[1] in [1, 3, 4]:
+                        # Format is (T, C, H, W), transpose to (T, H, W, C)
+                        frames = frames.transpose(0, 2, 3, 1)
+                    
+                    if len(frames.shape) == 3:
+                        # If grayscale, add channel dimension
+                        frames = np.expand_dims(frames, -1)
+                    
+                    print(f"Saving episode {i} with shape {frames.shape}")
+                    
+                    try:
+                        imageio.mimsave(episode_path, frames, fps=self.fps)
+                        print(f"Saved episode {i} to {episode_path}")
+                    except Exception as e:
+                        print(f"Error saving episode {i}: {e}")
+                        print(f"Frame shape: {frames.shape}, dtype: {frames.dtype}")
+
             videos_wandb = wandb.Video(videos, fps=self.fps, format="mp4")
             log_data[f'sim_video_eval'] = videos_wandb
 
