@@ -7,6 +7,7 @@ import copy
 from typing import Optional, Dict, Tuple, Union, List, Type
 from termcolor import cprint
 
+from diffusion_policy_3d.model.uni3d.uni3d import create_uni3d
 
 def create_mlp(
         input_dim: int,
@@ -242,6 +243,14 @@ class DP3Encoder(nn.Module):
             else:
                 pointcloud_encoder_cfg.in_channels = 3
                 self.extractor = PointNetEncoderXYZ(**pointcloud_encoder_cfg)
+        elif pointnet_type == "uni3d":
+            # Check if use_pc_color is True as uni3d requires color information
+            assert use_pc_color, "uni3d requires color information"
+            
+            # Create Uni3D encoder with the provided config
+            self.extractor = create_uni3d(args=pointcloud_encoder_cfg)
+            
+            assert self.n_output_channels == 1024, "uni3d requires output channel to be 1024"
         else:
             raise NotImplementedError(f"pointnet_type: {pointnet_type}")
 
@@ -261,7 +270,8 @@ class DP3Encoder(nn.Module):
 
 
     def forward(self, observations: Dict) -> torch.Tensor:
-        points = observations[self.point_cloud_key]
+        points = observations[self.point_cloud_key] # shape: 2, 512, 3/6
+        # cprint(f"points shape: {points.shape}", "red")
         assert len(points.shape) == 3, cprint(f"point cloud shape: {points.shape}, length should be 3", "red")
         if self.use_imagined_robot:
             img_points = observations[self.imagination_key][..., :points.shape[-1]] # align the last dim
@@ -269,11 +279,13 @@ class DP3Encoder(nn.Module):
         
         # points = torch.transpose(points, 1, 2)   # B * 3 * N
         # points: B * 3 * (N + sum(Ni))
-        pn_feat = self.extractor(points)    # B * out_channel
-            
+
+        pn_feat = self.extractor(points)    # B * out_channel --> 2, 64(512 if uni3d)
+
         state = observations[self.state_key]
         state_feat = self.state_mlp(state)  # B * 64
         final_feat = torch.cat([pn_feat, state_feat], dim=-1)
+        # cprint(f"final_feat shape: {final_feat.shape}", "red")
         return final_feat
 
 

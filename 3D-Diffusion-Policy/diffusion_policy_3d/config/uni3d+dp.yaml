@@ -1,0 +1,160 @@
+defaults:
+  - task: adroit_hammer
+
+name: train_dp3
+
+task_name: ${task.name}
+shape_meta: ${task.shape_meta}
+exp_name: "debug"
+
+# horizon: 4
+horizon: 16
+n_obs_steps: 2
+# n_action_steps: 3
+n_action_steps: 8
+n_latency_steps: 0
+dataset_obs_steps: ${n_obs_steps}
+keypoint_visible_rate: 1.0
+obs_as_global_cond: True
+
+policy:
+  _target_: diffusion_policy_3d.policy.dp3.DP3
+  use_point_crop: true
+  condition_type: film
+  use_down_condition: true
+  use_mid_condition: true
+  use_up_condition: true
+  
+  diffusion_step_embed_dim: 128
+  down_dims:
+  - 512
+  - 1024
+  - 2048
+  crop_shape:
+  - 80
+  - 80
+  encoder_output_dim: 1024 # fixed to 1024 since we are using pre-trained uni3d model
+  horizon: ${horizon}
+  kernel_size: 5
+  n_action_steps: ${n_action_steps}
+  n_groups: 8
+  n_obs_steps: ${n_obs_steps}
+
+  noise_scheduler:
+    _target_: diffusers.schedulers.scheduling_ddim.DDIMScheduler
+    num_train_timesteps: 100
+    beta_start: 0.0001
+    beta_end: 0.02
+    beta_schedule: squaredcos_cap_v2
+    clip_sample: True
+    set_alpha_to_one: True
+    steps_offset: 0
+    prediction_type: sample
+
+
+  num_inference_steps: 10
+  obs_as_global_cond: true
+  shape_meta: ${shape_meta}
+
+  use_pc_color: true
+  pointnet_type: "uni3d"
+
+
+  pointcloud_encoder_cfg:
+    # Model backbone settings
+    # pc_model: "eva_giant_patch14_560"  # Point cloud backbone model name
+    pc_model: "eva02_base_patch14_448"
+    pretrained_pc: null  # Path to backbone pretrained weights (optional)
+    drop_path_rate: 0.0  # Drop path rate for backbone
+    distributed: false  # Whether using distributed training
+    freeze_weights: true  # Whether freezing the whole uni3d model
+
+    # Point cloud encoder settings
+    group_size: 32  # Group size for point cloud processing, default to 32
+    num_group: 512  # Number of groups, default to 512
+    patch_dropout: 0.0  # Patch dropout rate
+
+    # Checkpoint settings
+    checkpoint_path: "/svl/u/ywlin/Generalized-dp3/3D-Diffusion-Policy/diffusion_policy_3d/model/uni3d/model_base.pt"  # [REQUIRED] Path to the pretrained Uni3D weights
+
+
+ema:
+  _target_: diffusion_policy_3d.model.diffusion.ema_model.EMAModel
+  update_after_step: 0
+  inv_gamma: 1.0
+  power: 0.75
+  min_value: 0.0
+  max_value: 0.9999
+
+dataloader:
+  batch_size: 128
+  num_workers: 8
+  shuffle: True
+  pin_memory: True
+  persistent_workers: False
+
+val_dataloader:
+  batch_size: 128
+  num_workers: 8
+  shuffle: False
+  pin_memory: True
+  persistent_workers: False
+
+optimizer:
+  _target_: torch.optim.AdamW
+  lr: 1.0e-4
+  betas: [0.95, 0.999]
+  eps: 1.0e-8
+  weight_decay: 1.0e-6
+
+training:
+  device: "cuda:0"
+  seed: 42
+  debug: False
+  resume: True
+  lr_scheduler: cosine
+  lr_warmup_steps: 500
+  num_epochs: 3000
+  gradient_accumulate_every: 1
+  use_ema: True
+  rollout_every: 200
+  checkpoint_every: 200
+  val_every: 1
+  sample_every: 5
+  max_train_steps: null
+  max_val_steps: null
+  tqdm_interval_sec: 1.0
+
+logging:
+  group: ${exp_name}
+  id: null
+  mode: online
+  # name: ${training.seed}
+  name: ${exp_name}
+  project: dp3
+  resume: true
+  tags:
+  - dp3
+
+checkpoint:
+  save_ckpt: True # if True, save checkpoint every checkpoint_every
+  topk:
+    monitor_key: test_mean_score
+    mode: max
+    k: 3
+    format_str: 'epoch={epoch:04d}-test_mean_score={test_mean_score:.3f}.ckpt'
+  save_last_ckpt: True # this only saves when save_ckpt is True
+  save_last_snapshot: False
+
+multi_run:
+  run_dir: data/outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task_name}
+  wandb_name_base: ${now:%Y.%m.%d-%H.%M.%S}_${name}_${task_name}
+
+hydra:
+  job:
+    override_dirname: ${name}
+  run:
+    dir: data/outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task_name}
+  sweep:
+    dir: data/outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task_name}
+    subdir: ${hydra.job.num}
