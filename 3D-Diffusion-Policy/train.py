@@ -355,7 +355,7 @@ class TrainDP3Workspace:
         policy.eval()
         policy.cuda()
 
-        runner_log = env_runner.run(policy)
+        runner_log = env_runner.run(policy, save_video=True)
         
       
         cprint(f"---------------- Eval Results --------------", 'magenta')

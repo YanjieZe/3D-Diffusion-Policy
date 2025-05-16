@@ -279,8 +279,9 @@ class DP3Encoder(nn.Module):
         
         # points = torch.transpose(points, 1, 2)   # B * 3 * N
         # points: B * 3 * (N + sum(Ni))
+
         pn_feat = self.extractor(points)    # B * out_channel --> 2, 64(512 if uni3d)
-            
+
         state = observations[self.state_key]
         state_feat = self.state_mlp(state)  # B * 64
         final_feat = torch.cat([pn_feat, state_feat], dim=-1)
