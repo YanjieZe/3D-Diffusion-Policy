@@ -4,10 +4,13 @@
 # bash scripts/train_policy.sh simple_dp3 adroit_hammer 0322 0 0
 # bash scripts/train_policy.sh dp3 metaworld_basketball 0602 0 0
 
+# bash scripts/train_policy.sh dp3 metaworld_bin-picking 0515 0 0
+# bash scripts/train_policy.sh uni3d+dp metaworld_bin-picking 0515 0 0
 
 
-DEBUG=False
-save_ckpt=True
+
+DEBUG=True
+save_ckpt=False
 
 alg_name=${1}
 task_name=${2}
