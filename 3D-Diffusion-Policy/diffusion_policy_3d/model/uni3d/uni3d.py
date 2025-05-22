@@ -77,9 +77,13 @@ def create_uni3d(args):
     
     # Freeze extractor if requested
     if args.freeze_weights:
+        model.eval()
         logging.info('Freezing Uni3D model parameters')
         for param in model.parameters():
             param.requires_grad = False
+        # Convert to half precision when frozen
+        model = model.half()
+        logging.info('Converted Uni3D model to half precision')
     
     # Count parameters
     total_params = sum(p.numel() for p in model.parameters())

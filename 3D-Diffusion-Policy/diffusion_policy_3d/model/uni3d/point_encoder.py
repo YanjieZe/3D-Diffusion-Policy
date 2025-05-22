@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from easydict import EasyDict
 import logging
-
+import contextlib
 def square_distance(src, dst):
     """
     Calculate Euclid distance between each two points.
@@ -33,9 +33,10 @@ def farthest_point_sample(xyz, npoint):
         centroids: sampled pointcloud index, [B, npoint]
     """
     device = xyz.device
+    dtype = xyz.dtype
     B, N, C = xyz.shape
     centroids = torch.zeros(B, npoint, dtype=torch.long).to(device)
-    distance = torch.ones(B, N).to(device) * 1e10
+    distance = torch.ones(B, N, dtype=dtype).to(device) * 1e10
     farthest = torch.randint(0, N, (B,), dtype=torch.long).to(device)
     batch_indices = torch.arange(B, dtype=torch.long).to(device)
     for i in range(npoint):
@@ -190,6 +191,7 @@ class PointcloudEncoder(nn.Module):
         self.embed_dim = 1024 # should be fixed since we are using pre-trained uni3d model
         self.group_size = args.group_size # 32
         self.num_group = args.num_group # 512
+        self.freeze_weights = args.freeze_weights
         # grouper
         self.group_divider = Group(num_group = self.num_group, group_size = self.group_size)
         # define the encoder
@@ -215,34 +217,46 @@ class PointcloudEncoder(nn.Module):
 
 
     def forward(self, pts, colors):
-        # divide the point cloud in the same form. This is important
-        _, center, features = self.group_divider(pts, colors) # pts: B N 3, colors: B N 3
+        with torch.no_grad() if self.freeze_weights else contextlib.nullcontext():
+            # Convert inputs to half precision if model is frozen
+            if self.freeze_weights:
+                pts = pts.half()
+                colors = colors.half()
+            
+            # divide the point cloud in the same form. This is important
+            _, center, features = self.group_divider(pts, colors) # pts: B N 3, colors: B N 3
 
-        # encoder the input cloud patches
-        group_input_tokens = self.encoder(features)  #  B G N
-        group_input_tokens = self.encoder2trans(group_input_tokens)
-        # prepare cls
-        cls_tokens = self.cls_token.expand(group_input_tokens.size(0), -1, -1)  
-        cls_pos = self.cls_pos.expand(group_input_tokens.size(0), -1, -1)  
-        # add pos embedding
-        pos = self.pos_embed(center)
-        # final input
-        x = torch.cat((cls_tokens, group_input_tokens), dim=1)
-        pos = torch.cat((cls_pos, pos), dim=1)
-        # transformer
-        x = x + pos
-        # x = x.half()
-        
-        # a patch_dropout of 0. would mean it is disabled and this function would do nothing but return what was passed in
-        x = self.patch_dropout(x)
+            # encoder the input cloud patches
+            group_input_tokens = self.encoder(features)  #  B G N
+            
+            group_input_tokens = self.encoder2trans(group_input_tokens)
+            # prepare cls
+            cls_tokens = self.cls_token.expand(group_input_tokens.size(0), -1, -1)  
+            cls_pos = self.cls_pos.expand(group_input_tokens.size(0), -1, -1)  
+            # add pos embedding
+            pos = self.pos_embed(center)
+            # final input
+            x = torch.cat((cls_tokens, group_input_tokens), dim=1)
+            pos = torch.cat((cls_pos, pos), dim=1)
+            # transformer
+            x = x + pos
+            # x = x.half()
+            
+            # a patch_dropout of 0. would mean it is disabled and this function would do nothing but return what was passed in
+            x = self.patch_dropout(x)
 
-        x = self.visual.pos_drop(x)
+            x = self.visual.pos_drop(x)
 
-        # ModuleList not support forward
-        for i, blk in enumerate(self.visual.blocks):
-            x = blk(x)
-        x = self.visual.norm(x[:, 0, :])
-        x = self.visual.fc_norm(x)
+            # ModuleList not support forward
+            print(f"[DEBUG] Before transformer blocks: {torch.cuda.memory_allocated() / 1e9:.2f} GB")
+            print(f"[DEBUG] Memory reserved before blocks: {torch.cuda.memory_reserved() / 1e9:.2f} GB")
+            for i, blk in enumerate(self.visual.blocks):
+                x = blk(x)
+            print(f"[DEBUG] After all transformer blocks: {torch.cuda.memory_allocated() / 1e9:.2f} GB")
+            print(f"[DEBUG] Memory reserved after all blocks: {torch.cuda.memory_reserved() / 1e9:.2f} GB")
+            
+            x = self.visual.norm(x[:, 0, :])
+            x = self.visual.fc_norm(x)
 
-        x = self.trans2embed(x)
-        return x
+            x = self.trans2embed(x)
+            return x
