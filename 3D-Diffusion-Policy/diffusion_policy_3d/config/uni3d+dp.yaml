@@ -27,9 +27,9 @@ policy:
   
   diffusion_step_embed_dim: 128
   down_dims:
+  - 256
   - 512
   - 1024
-  - 2048
   crop_shape:
   - 80
   - 80
@@ -62,8 +62,7 @@ policy:
 
   pointcloud_encoder_cfg:
     # Model backbone settings
-    # pc_model: "eva_giant_patch14_560"  # Point cloud backbone model name
-    pc_model: "eva02_base_patch14_448"
+    uni3d_size: "large" # "base", "large", "giant"
     pretrained_pc: null  # Path to backbone pretrained weights (optional)
     drop_path_rate: 0.0  # Drop path rate for backbone
     distributed: false  # Whether using distributed training
@@ -72,10 +71,10 @@ policy:
     # Point cloud encoder settings
     group_size: 32  # Group size for point cloud processing, default to 32
     num_group: 512  # Number of groups, default to 512
-    patch_dropout: 0.0  # Patch dropout rate
+    patch_dropout: 0.5  # Patch dropout rate
 
     # Checkpoint settings
-    checkpoint_path: "/svl/u/ywlin/Generalized-dp3/3D-Diffusion-Policy/diffusion_policy_3d/model/uni3d/model_base.pt"  # [REQUIRED] Path to the pretrained Uni3D weights
+    checkpoint_path: "/svl/u/ywlin/Generalized-dp3/3D-Diffusion-Policy/diffusion_policy_3d/model/uni3d/model_${policy.pointcloud_encoder_cfg.uni3d_size}.pt"  # Path to the pretrained Uni3D weights
 
 
 ema:
@@ -87,14 +86,14 @@ ema:
   max_value: 0.9999
 
 dataloader:
-  batch_size: 128
+  batch_size: 16
   num_workers: 8
   shuffle: True
   pin_memory: True
   persistent_workers: False
 
 val_dataloader:
-  batch_size: 128
+  batch_size: 16
   num_workers: 8
   shuffle: False
   pin_memory: True
@@ -114,11 +113,11 @@ training:
   resume: True
   lr_scheduler: cosine
   lr_warmup_steps: 500
-  num_epochs: 3000
+  num_epochs: 81
   gradient_accumulate_every: 1
   use_ema: True
-  rollout_every: 200
-  checkpoint_every: 200
+  rollout_every: 20
+  checkpoint_every: 20
   val_every: 1
   sample_every: 5
   max_train_steps: null

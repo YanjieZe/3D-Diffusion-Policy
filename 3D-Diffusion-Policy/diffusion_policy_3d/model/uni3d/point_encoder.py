@@ -187,7 +187,7 @@ class PointcloudEncoder(nn.Module):
         # Convert args dictionary to EasyDict for attribute access
         if not isinstance(args, EasyDict):
             args = EasyDict(args)
-        self.trans_dim = 768 # should be fixed since we are using pre-trained uni3d model
+        self.trans_dim = args.pc_feat_dim # should be fixed since we are using pre-trained uni3d model
         self.embed_dim = 1024 # should be fixed since we are using pre-trained uni3d model
         self.group_size = args.group_size # 32
         self.num_group = args.num_group # 512
@@ -212,7 +212,8 @@ class PointcloudEncoder(nn.Module):
             nn.Linear(128, self.trans_dim)
         )  
         # setting a patch_dropout of 0. would mean it is disabled and this function would be the identity fn
-        self.patch_dropout = PatchDropout(args.patch_dropout) if args.patch_dropout > 0. else nn.Identity()
+        patch_dropout = args.patch_dropout if not self.freeze_weights else 0.
+        self.patch_dropout = PatchDropout(patch_dropout) if patch_dropout > 0. else nn.Identity()
         self.visual = point_transformer
 
 
@@ -248,12 +249,12 @@ class PointcloudEncoder(nn.Module):
             x = self.visual.pos_drop(x)
 
             # ModuleList not support forward
-            print(f"[DEBUG] Before transformer blocks: {torch.cuda.memory_allocated() / 1e9:.2f} GB")
-            print(f"[DEBUG] Memory reserved before blocks: {torch.cuda.memory_reserved() / 1e9:.2f} GB")
+            # print(f"[DEBUG] Before transformer blocks: {torch.cuda.memory_allocated() / 1e9:.2f} GB")
+            # print(f"[DEBUG] Memory reserved before blocks: {torch.cuda.memory_reserved() / 1e9:.2f} GB")
             for i, blk in enumerate(self.visual.blocks):
                 x = blk(x)
-            print(f"[DEBUG] After all transformer blocks: {torch.cuda.memory_allocated() / 1e9:.2f} GB")
-            print(f"[DEBUG] Memory reserved after all blocks: {torch.cuda.memory_reserved() / 1e9:.2f} GB")
+            # print(f"[DEBUG] After all transformer blocks: {torch.cuda.memory_allocated() / 1e9:.2f} GB")
+            # print(f"[DEBUG] Memory reserved after all blocks: {torch.cuda.memory_reserved() / 1e9:.2f} GB")
             
             x = self.visual.norm(x[:, 0, :])
             x = self.visual.fc_norm(x)

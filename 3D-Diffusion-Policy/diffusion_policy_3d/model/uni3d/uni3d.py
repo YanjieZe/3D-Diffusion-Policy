@@ -21,9 +21,12 @@ class Uni3D(nn.Module):
         return pc_feat
 
 def create_uni3d(args):  
+
+    uni3d_size_args = get_uni3d_size_args(args.uni3d_size)
+    args["pc_feat_dim"] = uni3d_size_args["pc_feat_dim"]
     
     # create transformer blocks for point cloud via timm
-    point_transformer = timm.create_model(args.pc_model, checkpoint_path=args.pretrained_pc, drop_path_rate=args.drop_path_rate)
+    point_transformer = timm.create_model(uni3d_size_args["pc_model"], checkpoint_path=args.pretrained_pc, drop_path_rate=args.drop_path_rate)
 
     # create whole point cloud encoder
     point_encoder = PointcloudEncoder(point_transformer, args)
@@ -96,6 +99,22 @@ def create_uni3d(args):
     logging.info(f"Point encoder parameters: {point_encoder_params:,}")
     
     return model
+
+def get_uni3d_size_args(uni3d_size):
+    if uni3d_size == "base":
+        pc_model = "eva02_base_patch14_448"
+        pc_feat_dim = 768
+    elif uni3d_size == "large":
+        pc_model = "eva02_large_patch14_448"
+        pc_feat_dim = 1024
+    elif uni3d_size == "giant":
+        pc_model = "eva_giant_patch14_560"
+        pc_feat_dim = 1408
+    return {
+        "pc_model": pc_model,
+        "pc_feat_dim": pc_feat_dim,
+    }
+
 
 # Example of loading a pretrained Uni3D model for downstream tasks:
 """

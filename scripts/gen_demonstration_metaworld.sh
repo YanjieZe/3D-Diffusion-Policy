@@ -8,5 +8,5 @@ task_name=${1}
 
 export CUDA_VISIBLE_DEVICES=0
 python gen_demonstration_expert.py --env_name=${task_name} \
-            --num_episodes 10 \
+            --num_episodes 100 \
             --root_dir "../../3D-Diffusion-Policy/data/" 
