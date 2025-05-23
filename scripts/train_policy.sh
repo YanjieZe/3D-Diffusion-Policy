@@ -9,8 +9,8 @@
 
 
 
-DEBUG=True
-save_ckpt=False
+DEBUG=False
+save_ckpt=True
 
 alg_name=${1}
 task_name=${2}
@@ -37,8 +37,10 @@ else
     echo -e "\033[33mTrain mode\033[0m"
 fi
 
-cd 3D-Diffusion-Policy
-
+# Only cd if we're not already in the directory
+if [ ! -f "train.py" ]; then
+    cd 3D-Diffusion-Policy
+fi
 
 export HYDRA_FULL_ERROR=1 
 export CUDA_VISIBLE_DEVICES=${gpu_id}
