@@ -5,9 +5,10 @@
 cd third_party/VRL3/src
 
 task=${1}
+num_episodes=${2:-10}
 
 CUDA_VISIBLE_DEVICES=0 python gen_demonstration_expert.py --env_name $task \
-                        --num_episodes 10 \
+                        --num_episodes $num_episodes \
                         --root_dir "../../../3D-Diffusion-Policy/data/" \
                         --expert_ckpt_path "../ckpts/vrl3_${task}.pt" \
                         --img_size 84 \
