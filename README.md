@@ -193,3 +193,71 @@ If you find our work useful, please consider citing:
 	year={2024}
 }
 ```
+
+# CS231N Final Project
+
+## Baseline
+### Step 1: Generate Demonstrations
+```bash
+bash scripts/gen_demonstration_metaworld.sh bin-picking 
+```
+
+### Step 2: Train the Policy
+```bash
+bash scripts/train_policy.sh dp3 metaworld_bin-picking 0521 0 0
+```
+Aproximately 2 hours.
+
+### Step 3: Evaluate the Policy
+```bash
+bash scripts/eval_policy.sh dp3 metaworld_bin-picking 0521 0 0
+```
+If train 10 demo, 300 epochs (default)
+Training success rate = 0.55
+Evaluation success rate = 0.45
+  mean_traj_rewards: 2976.6751
+  mean_success_rates: 0.4500
+  test_mean_score: 0.4500
+  SR_test_L3: 0.4500
+  SR_test_L5: 0.4500
+
+## Develop
+To speed up the development process, I created `short_simple_dp3.yaml` and `short_dp3.yaml` to train the policy with 200 and 60 epochs (compared to 3000 epochs in `dp3.yaml`).
+
+In addition, I modified the `gen_demonstration_adroit.sh` to generate 50 demonstrations (compared to 10 demonstrations in the original script).
+
+### Step 1: Generate Demonstrations
+```bash
+bash scripts/gen_demonstration_adroit.sh hammer 50
+```
+The second argument is the number of demonstrations (only works for `adroit` tasks).
+I generated 50 demonstrations for the `hammer` task.
+
+### Step 2: Train the Policy
+```bash
+bash scripts/train_policy.sh short_simple_dp3 adroit_hammer 0521 0 0
+or
+bash scripts/train_policy.sh short_dp3 adroit_hammer 0521 0 0
+```
+Only train for 200 epochs (short_simple_dp3) or 60 epochs (short_dp3). Should reach 100% success rate at around 100 epochs (short_simple_dp3) or 50 epochs (short_dp3). Total training time is within 10 minutes.
+
+### Step 3: Evaluate the Policy
+```bash
+bash scripts/eval_policy.sh short_simple_dp3 adroit_hammer 0521 0 0
+or
+bash scripts/eval_policy.sh short_dp3 adroit_hammer 0521 0 0
+```
+Short_simple_dp3 Test results:
+- mean_n_goal_achieved: 21.1000
+- mean_success_rates: 0.8500
+- test_mean_score: 0.8500
+- SR_test_L3: 0.8500
+- SR_test_L5: 0.8500
+
+Short_dp3 Test results:
+---------------- Eval Results --------------
+mean_n_goal_achieved: 21.1000
+mean_success_rates: 0.8500
+test_mean_score: 0.8500
+SR_test_L3: 0.8500
+SR_test_L5: 0.8500
