@@ -33,7 +33,7 @@ policy:
   crop_shape:
   - 80
   - 80
-  encoder_output_dim: 1024 # fixed to 1024 since we are using pre-trained uni3d model
+  encoder_output_dim: 64 # Now supports any dimension via projection layer
   horizon: ${horizon}
   kernel_size: 5
   n_action_steps: ${n_action_steps}
@@ -62,15 +62,15 @@ policy:
 
   pointcloud_encoder_cfg:
     # Model backbone settings
-    uni3d_size: "large" # "base", "large", "giant"
+    uni3d_size: "tiny" # "base 88M", "large 307M", "giant 1B", "tiny 6M", "small 23M"
     pretrained_pc: null  # Path to backbone pretrained weights (optional)
-    drop_path_rate: 0.0  # Drop path rate for backbone
+    drop_path_rate: 0.2  # Drop path rate for backbone
     distributed: false  # Whether using distributed training
-    freeze_weights: true  # Whether freezing the whole uni3d model
+    freeze_weights: false  # Whether freezing the whole uni3d model
 
     # Point cloud encoder settings
     group_size: 32  # Group size for point cloud processing, default to 32
-    num_group: 512  # Number of groups, default to 512
+    num_group: 256  # Number of groups, default to 512
     patch_dropout: 0.5  # Patch dropout rate
 
     # Checkpoint settings
@@ -86,14 +86,14 @@ ema:
   max_value: 0.9999
 
 dataloader:
-  batch_size: 16
+  batch_size: 64
   num_workers: 8
   shuffle: True
   pin_memory: True
   persistent_workers: False
 
 val_dataloader:
-  batch_size: 16
+  batch_size: 64
   num_workers: 8
   shuffle: False
   pin_memory: True
@@ -113,7 +113,7 @@ training:
   resume: True
   lr_scheduler: cosine
   lr_warmup_steps: 500
-  num_epochs: 81
+  num_epochs: 1001
   gradient_accumulate_every: 1
   use_ema: True
   rollout_every: 20

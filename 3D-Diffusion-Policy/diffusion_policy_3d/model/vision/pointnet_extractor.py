@@ -247,10 +247,11 @@ class DP3Encoder(nn.Module):
             # Check if use_pc_color is True as uni3d requires color information
             assert use_pc_color, "uni3d requires color information"
             
-            # Create Uni3D encoder with the provided config
-            self.extractor = create_uni3d(args=pointcloud_encoder_cfg)
+            # Create Uni3D encoder with the provided config and desired output dimension
+            self.extractor = create_uni3d(args=pointcloud_encoder_cfg, output_dim=self.n_output_channels)
             
-            assert self.n_output_channels == 1024, "uni3d requires output channel to be 1024"
+            # Remove the assertion - uni3d can now output any dimension via projection layer
+            cprint(f"[DP3Encoder] Using uni3d with output dimension: {self.n_output_channels}", "green")
         else:
             raise NotImplementedError(f"pointnet_type: {pointnet_type}")
 

@@ -46,3 +46,9 @@ nohup.out
 output/
 
 *.pt
+
+# memory analysis
+debug_memory_usage.py
+simple_memory_test.py
+test_training_memory.py
+verify_memory_scaling.py

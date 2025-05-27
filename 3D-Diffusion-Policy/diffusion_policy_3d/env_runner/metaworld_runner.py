@@ -61,7 +61,7 @@ class MetaworldRunner(BaseRunner):
         self.logger_util_test = logger_util.LargestKRecorder(K=3)
         self.logger_util_test10 = logger_util.LargestKRecorder(K=5)
 
-    def run(self, policy: BasePolicy, save_video=True):
+    def run(self, policy: BasePolicy, save_video=False):
         device = policy.device
         dtype = policy.dtype
 
