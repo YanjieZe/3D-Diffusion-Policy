@@ -14,7 +14,7 @@ def print_params(model):
             params_dict[part_name] = 0
         params_dict[part_name] += param.numel()
         
-    frozen_params = sum(1 for param in model.parameters() if not param.requires_grad)
+    frozen_params = sum(p.numel() for p in model.parameters() if not p.requires_grad)
 
     cprint(f'----------------------------------', 'cyan')
     cprint(f'Class name: {model.__class__.__name__}', 'cyan')
