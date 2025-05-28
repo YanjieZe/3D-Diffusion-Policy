@@ -10,7 +10,7 @@ shape_meta: &shape_meta
     #     shape: *image_shape
     #     type: rgb
     point_cloud:
-      shape: [512, 3]
+      shape: [512, 6]
       type: point_cloud
     agent_pos:
       shape: [24]

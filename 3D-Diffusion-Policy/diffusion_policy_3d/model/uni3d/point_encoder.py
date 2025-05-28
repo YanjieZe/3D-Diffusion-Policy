@@ -3,6 +3,7 @@ import torch.nn as nn
 from easydict import EasyDict
 import logging
 import contextlib
+from torch_points_kernels import furthest_point_sample
 def square_distance(src, dst):
     """
     Calculate Euclid distance between each two points.
@@ -24,38 +25,15 @@ def square_distance(src, dst):
     dist += torch.sum(dst ** 2, -1).view(B, 1, M)
     return dist    
 
-def farthest_point_sample(xyz, npoint):
-    """
-    Input:
-        xyz: pointcloud data, [B, N, 3]
-        npoint: number of samples
-    Return:
-        centroids: sampled pointcloud index, [B, npoint]
-    """
-    device = xyz.device
-    dtype = xyz.dtype
-    B, N, C = xyz.shape
-    centroids = torch.zeros(B, npoint, dtype=torch.long).to(device)
-    distance = torch.ones(B, N, dtype=dtype).to(device) * 1e10
-    farthest = torch.randint(0, N, (B,), dtype=torch.long).to(device)
-    batch_indices = torch.arange(B, dtype=torch.long).to(device)
-    for i in range(npoint):
-        centroids[:, i] = farthest
-        centroid = xyz[batch_indices, farthest, :].view(B, 1, 3)
-        dist = torch.sum((xyz - centroid) ** 2, -1)
-        mask = dist < distance
-        distance[mask] = dist[mask]
-        farthest = torch.max(distance, -1)[1]
-    return centroids
-
 def fps(data, number):
     '''
-        data B N 3
-        number int
+    data: [B, N, 3]
+    number: int
+    return: [B, number, 3]
     '''
-    fps_idx = farthest_point_sample(data, number)
+    fps_idx = furthest_point_sample(data, number)
     fps_data = torch.gather(
-        data, 1, fps_idx.unsqueeze(-1).long().expand(-1, -1, data.shape[-1]))
+        data, 1, fps_idx.long().unsqueeze(-1).expand(-1, -1, data.shape[-1]))
     return fps_data
 
 # https://github.com/Strawberry-Eat-Mango/PCT_Pytorch/blob/main/util.py 
@@ -187,7 +165,7 @@ class PointcloudEncoder(nn.Module):
         # Convert args dictionary to EasyDict for attribute access
         if not isinstance(args, EasyDict):
             args = EasyDict(args)
-        self.trans_dim = args.pc_feat_dim # should be fixed since we are using pre-trained uni3d model
+        self.trans_dim = args.pc_feat_dim
         self.embed_dim = 1024 # should be fixed since we are using pre-trained uni3d model
         self.group_size = args.group_size # 32
         self.num_group = args.num_group # 512
@@ -253,6 +231,7 @@ class PointcloudEncoder(nn.Module):
             # print(f"[DEBUG] Memory reserved before blocks: {torch.cuda.memory_reserved() / 1e9:.2f} GB")
             for i, blk in enumerate(self.visual.blocks):
                 x = blk(x)
+                    
             # print(f"[DEBUG] After all transformer blocks: {torch.cuda.memory_allocated() / 1e9:.2f} GB")
             # print(f"[DEBUG] Memory reserved after all blocks: {torch.cuda.memory_reserved() / 1e9:.2f} GB")
             

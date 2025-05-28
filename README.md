@@ -1,6 +1,17 @@
-
-
 # <a href="https://3d-diffusion-policy.github.io">3D Diffusion Policy</a>
+
+## 🔄 Updates
+
+# 🧠 Memory Usage Analysis
+
+If you encounter high GPU memory usage (especially with Uni3D models), see [MEMORY_ANALYSIS_REPORT.md](MEMORY_ANALYSIS_REPORT.md) for detailed analysis and optimization solutions. The report explains why Uni3D models can consume up to 48GB of GPU memory despite having only ~7M parameters and provides optimized configurations to reduce memory usage to 2-4GB.
+
+**Latest Changes:**
+- **FPS Implementation Update**: Updated the Farthest Point Sampling (FPS) implementation to use the torch version via `torch-points-kernels`. You can install it using:
+  ```bash
+  pip install torch-points-kernels
+  ```
+- **Numpy Version Conflict**: If you encounter numpy version conflicts during installation, use the newer numpy version. The codebase is compatible with recent numpy releases.
 
 <a href="https://3d-diffusion-policy.github.io"><strong>Project Page</strong></a>
   |
