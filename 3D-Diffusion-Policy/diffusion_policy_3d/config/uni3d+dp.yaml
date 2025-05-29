@@ -67,6 +67,7 @@ policy:
     drop_path_rate: 0.2  # Drop path rate for backbone
     distributed: false  # Whether using distributed training
     freeze_weights: false  # Whether freezing the whole uni3d model
+    load_pretrain: false  # Whether to load pretrained weights
 
     # Point cloud encoder settings
     group_size: 32  # Group size for point cloud processing, default to 32

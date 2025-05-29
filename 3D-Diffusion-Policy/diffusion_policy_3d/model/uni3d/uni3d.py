@@ -9,11 +9,11 @@ import logging
 from .point_encoder import PointcloudEncoder
 
 class Uni3D(nn.Module):
-    def __init__(self, point_encoder, output_dim=None):
+    def __init__(self, point_encoder, output_dim=None, load_pretrain=None):
         super().__init__()
         self.logit_scale = nn.Parameter(torch.ones([]) * np.log(1 / 0.07))
         self.point_encoder = point_encoder
-        
+        self.load_pretrain = load_pretrain
         # Add optional projection layer to map from 1024 to desired output dimension
         self.output_dim = output_dim
         if output_dim is not None and output_dim != 1024:
@@ -23,6 +23,9 @@ class Uni3D(nn.Module):
             self.projection = None
 
     def forward(self, pc):
+        if self.load_pretrain:  
+            pc = self.uni3d_pcd_mapping(pc)
+            
         xyz = pc[:,:,:3].contiguous() # B N 3
         color = pc[:,:,3:].contiguous() # B N 3
         pc_feat = self.point_encoder(xyz, color)
@@ -32,8 +35,20 @@ class Uni3D(nn.Module):
             pc_feat = self.projection(pc_feat)
             
         return pc_feat
+    
+    def uni3d_pcd_mapping(self, pcd):
+        # HACK: DP3 uses normalizer to normalize the point cloud to -1~1 like other inputs,
+        # but the point cloud that uni3d takes during pre-training is in the range of 0~1
+        # so we need to map the point cloud to the range of 0~1
+        assert len(pcd.shape) == 3, f"pcd shape must be B, N, 3, but got {pcd.shape}"
+        assert pcd.min().item() == -1.0, f"Point cloud minimum value {pcd.min().item()} should be -1.0"
+        assert pcd.max().item() == 1.0, f"Point cloud maximum value {pcd.max().item()} should be 1.0"
+        return (pcd + 1.0) / 2.0
 
 def create_uni3d(args, output_dim=None):  
+    # Assert that freeze_weights cannot be true when load_pretrain is false
+    if not getattr(args, 'load_pretrain', True):
+        assert not getattr(args, 'freeze_weights', False), "Cannot freeze weights when load_pretrain is False"
 
     uni3d_size_args = get_uni3d_size_args(args.uni3d_size)
     args["pc_feat_dim"] = uni3d_size_args["pc_feat_dim"]
@@ -46,65 +61,68 @@ def create_uni3d(args, output_dim=None):
     point_encoder = PointcloudEncoder(point_transformer, args)
 
     # uni3d model with optional output dimension
-    model = Uni3D(point_encoder=point_encoder, output_dim=output_dim)
+    model = Uni3D(point_encoder=point_encoder, output_dim=output_dim, load_pretrain=args.load_pretrain)
     
-    # load full Uni3D pretrained weights if checkpoint_path is provided
-    assert hasattr(args, 'checkpoint_path') and args.checkpoint_path is not None, "checkpoint_path is required"
-    checkpoint_path = args.checkpoint_path
-    checkpoint = torch.load(checkpoint_path, map_location='cpu')
-    logging.info('Loading Uni3D checkpoint from {}'.format(checkpoint_path))
-    
-    # Extract state dict based on the format in the checkpoint
-    if 'module' in checkpoint:
-        sd = checkpoint['module']
-    elif 'state_dict' in checkpoint:
-        sd = checkpoint['state_dict']
+    # Only load pretrained weights if load_pretrain is True
+    if getattr(args, 'load_pretrain', True):
+        assert hasattr(args, 'checkpoint_path') and args.checkpoint_path is not None, "checkpoint_path is required when load_pretrain is True"
+        checkpoint_path = args.checkpoint_path
+        checkpoint = torch.load(checkpoint_path, map_location='cpu')
+        logging.info('Loading Uni3D checkpoint from {}'.format(checkpoint_path))
+        
+        # Extract state dict based on the format in the checkpoint
+        if 'module' in checkpoint:
+            sd = checkpoint['module']
+        elif 'state_dict' in checkpoint:
+            sd = checkpoint['state_dict']
+        else:
+            sd = checkpoint
+        
+        # Remove 'module.' prefix if necessary
+        distributed = getattr(args, 'distributed', False)
+        if not distributed and next(iter(sd.items()))[0].startswith('module.'):
+            sd = {k[len('module.'):]: v for k, v in sd.items()}
+        
+        # Load the state dict (excluding projection layer if it exists)
+        model_state_dict = model.state_dict()
+        
+        # Filter out projection layer from both model and checkpoint
+        filtered_sd = {}
+        filtered_model_keys = set()
+        
+        for key, value in sd.items():
+            if not key.startswith('projection.'):
+                filtered_sd[key] = value
+        
+        for key in model_state_dict.keys():
+            if not key.startswith('projection.'):
+                filtered_model_keys.add(key)
+        
+        # Check which parameters are in the model but not in the checkpoint (missing)
+        checkpoint_keys = set(filtered_sd.keys())
+        
+        missing_keys = filtered_model_keys - checkpoint_keys
+        unexpected_keys = checkpoint_keys - filtered_model_keys
+        
+        # Log detailed information about the loading process
+        if len(missing_keys) > 0:
+            logging.info(f"Missing keys in checkpoint: {len(missing_keys)} parameters")
+            for key in sorted(missing_keys):
+                logging.info(f"  Missing: {key}")
+        
+        if len(unexpected_keys) > 0:
+            logging.info(f"Unexpected keys in checkpoint: {len(unexpected_keys)} parameters")
+            for key in sorted(unexpected_keys):
+                logging.info(f"  Unexpected: {key}")
+                
+        matched_keys = filtered_model_keys.intersection(checkpoint_keys)
+        logging.info(f"Successfully matched keys: {len(matched_keys)}/{len(filtered_model_keys)} model parameters")
+        
+        # Load the state dict (strict=False to allow missing projection layer)
+        model.load_state_dict(filtered_sd, strict=False)
+        logging.info('Successfully loaded Uni3D model weights')
     else:
-        sd = checkpoint
-    
-    # Remove 'module.' prefix if necessary
-    distributed = getattr(args, 'distributed', False)
-    if not distributed and next(iter(sd.items()))[0].startswith('module.'):
-        sd = {k[len('module.'):]: v for k, v in sd.items()}
-    
-    # Load the state dict (excluding projection layer if it exists)
-    model_state_dict = model.state_dict()
-    
-    # Filter out projection layer from both model and checkpoint
-    filtered_sd = {}
-    filtered_model_keys = set()
-    
-    for key, value in sd.items():
-        if not key.startswith('projection.'):
-            filtered_sd[key] = value
-    
-    for key in model_state_dict.keys():
-        if not key.startswith('projection.'):
-            filtered_model_keys.add(key)
-    
-    # Check which parameters are in the model but not in the checkpoint (missing)
-    checkpoint_keys = set(filtered_sd.keys())
-    
-    missing_keys = filtered_model_keys - checkpoint_keys
-    unexpected_keys = checkpoint_keys - filtered_model_keys
-    
-    # Log detailed information about the loading process
-    if len(missing_keys) > 0:
-        logging.info(f"Missing keys in checkpoint: {len(missing_keys)} parameters")
-        for key in sorted(missing_keys):
-            logging.info(f"  Missing: {key}")
-    
-    if len(unexpected_keys) > 0:
-        logging.info(f"Unexpected keys in checkpoint: {len(unexpected_keys)} parameters")
-        for key in sorted(unexpected_keys):
-            logging.info(f"  Unexpected: {key}")
-            
-    matched_keys = filtered_model_keys.intersection(checkpoint_keys)
-    logging.info(f"Successfully matched keys: {len(matched_keys)}/{len(filtered_model_keys)} model parameters")
-    
-    # Load the state dict (strict=False to allow missing projection layer)
-    model.load_state_dict(filtered_sd, strict=False)
-    logging.info('Successfully loaded Uni3D model weights')
+        logging.info('Skipping pretrained weights loading as load_pretrain is False')
     
     # Freeze extractor if requested
     if args.freeze_weights:
