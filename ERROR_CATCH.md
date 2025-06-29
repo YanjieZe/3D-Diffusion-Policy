@@ -139,3 +139,7 @@ This is because only huggingface_hub lower than 0.26 supports cached_download, t
                          ~~~^
 
 This is because no specific opencv-python version, go to 3D-Diffusion-Policy/third_party/gym-0.21.0/setup.py and line 20, add 0 at the end of opencv-python>=3. just like this [issue](https://github.com/YanjieZe/3D-Diffusion-Policy/issues/92)
+
+- Error: python -m train ... Fails with PathNotFoundError Due to Incorrect Current Working Directory.
+
+Check this [issue](https://github.com/YanjieZe/3D-Diffusion-Policy/issues/152) for a fix.
