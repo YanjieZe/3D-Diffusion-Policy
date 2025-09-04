@@ -33,6 +33,7 @@
 - Try to use **global position** instead of relative position as **action space**.
 
 **Applications and extensions of DP3 from the community**:
+- [arXiv 2025.09](https://arxiv.org/abs/2509.01819), *ManiFlow: A General Robot Manipulation Policy via Consistency Flow Training*, where DP3 is improved via new backbones and flow matching objective.
 - [arXiv 2025.07](https://arxiv.org/abs/2507.00833), *HumanoidGen: Data Generation for Bimanual Dexterous Manipulation via LLM Reasoning*, where DP3 shows superior performance over DP on bimanual humanoid manipulation tasks in simulation.
 - [arXiv 2025.06](https://arxiv.org/abs/2506.15666), *Vision in Action: Learning Active Perception from Human Demonstrations*, where DP3 serves as a strong baseline in active perception tasks.
 - [arXiv 2025.06](https://arxiv.org/abs/2506.14317), *ClutterDexGrasp: A Sim-to-Real System for General Dexterous Grasping in Cluttered Scenes*, where DP3 shows impressive dex grasping capbilities by distilling an RL teacher policy.
