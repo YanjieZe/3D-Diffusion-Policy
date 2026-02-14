@@ -8,10 +8,10 @@ shape_meta: ${task.shape_meta}
 exp_name: "debug"
 
 # horizon: 4
-horizon: 16
-n_obs_steps: 2
+horizon: 24
+n_obs_steps: 1
 # n_action_steps: 3
-n_action_steps: 8
+n_action_steps: 12
 n_latency_steps: 0
 dataset_obs_steps: ${n_obs_steps}
 keypoint_visible_rate: 1.0
@@ -104,11 +104,11 @@ training:
   resume: True
   lr_scheduler: cosine
   lr_warmup_steps: 500
-  num_epochs: 3000
+  num_epochs: 1000
   gradient_accumulate_every: 1
   use_ema: True
   rollout_every: 200
-  checkpoint_every: 200
+  checkpoint_every: 50
   val_every: 1
   sample_every: 5
   max_train_steps: null
@@ -119,14 +119,14 @@ logging:
   group: ${exp_name}
   id: null
   mode: online
-  name: ${training.seed}
+  name: ${training.addition_info}-${training.seed}
   project: dp3
   resume: true
   tags:
   - dp3
 
 checkpoint:
-  save_ckpt: False # if True, save checkpoint every checkpoint_every
+  save_ckpt: True # if True, save checkpoint every checkpoint_every
   topk:
     monitor_key: test_mean_score
     mode: max
@@ -136,14 +136,14 @@ checkpoint:
   save_last_snapshot: False
 
 multi_run:
-  run_dir: data/outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task_name}
+  run_dir: /scratch2/cross-emb/DP3_outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task_name}
   wandb_name_base: ${now:%Y.%m.%d-%H.%M.%S}_${name}_${task_name}
 
 hydra:
   job:
     override_dirname: ${name}
   run:
-    dir: data/outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task_name}
+    dir: /scratch2/cross-emb/DP3_outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task_name}
   sweep:
-    dir: data/outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task_name}
+    dir: /scratch2/cross-emb/DP3_outputs/${now:%Y.%m.%d}/${now:%H.%M.%S}_${name}_${task_name}
     subdir: ${hydra.job.num}

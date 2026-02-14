@@ -244,12 +244,12 @@ class DP3(BasePolicy):
         
         # get prediction
 
-
         result = {
             'action': action,
             'action_pred': action_pred,
         }
-        
+    
+
         return result
 
     # ========= training  ============
@@ -371,6 +371,7 @@ class DP3(BasePolicy):
         # print(f"t4-t3: {t4-t3:.3f}")
         # print(f"t5-t4: {t5-t4:.3f}")
         # print(f"t6-t5: {t6-t5:.3f}")
-        
+
+
         return loss, loss_dict
 

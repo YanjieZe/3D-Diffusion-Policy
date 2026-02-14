@@ -14,12 +14,12 @@ task_name=${2}
 config_name=${alg_name}
 addition_info=${3}
 seed=${4}
-exp_name=${task_name}-${alg_name}-${addition_info}
-run_dir="data/outputs/${exp_name}_seed${seed}"
-
-
-# gpu_id=$(bash scripts/find_gpu.sh)
 gpu_id=${5}
+exp_name=${task_name}-${alg_name}-${addition_info}
+run_dir="/scratch2/cross-emb/DP3_outputs/${exp_name}_seed${seed}"
+gpu_id=${5}
+# gpu_id=$(bash scripts/find_gpu.sh)
+
 echo -e "\033[33mgpu id (to use): ${gpu_id}\033[0m"
 
 
@@ -45,10 +45,8 @@ python train.py --config-name=${config_name}.yaml \
                             training.debug=$DEBUG \
                             training.seed=${seed} \
                             training.device="cuda:0" \
+                            +training.addition_info=${addition_info} \
                             exp_name=${exp_name} \
                             logging.mode=${wandb_mode} \
                             checkpoint.save_ckpt=${save_ckpt}
 
-
-
-                                

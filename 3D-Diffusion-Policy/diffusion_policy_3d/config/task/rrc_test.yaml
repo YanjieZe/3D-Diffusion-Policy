@@ -1,0 +1,31 @@
+name: rrc_test
+
+task_name: custom
+
+shape_meta: &shape_meta
+  # acceptable types: rgb, low_dim
+  obs:
+    point_cloud:
+      shape: [2500, 3]
+      type: point_cloud
+    agent_pos:
+      shape: [7]
+      type: low_dimx
+  action:
+    shape: [7]
+
+env_runner: null
+
+# zarr_path: /scratch2/cross-emb/DP3_data/data_from_puru_no_eef_binary_gripper.zarr  
+# zarr_path: /scratch2/cross-emb/DP3_data/data_from_puru_no_eef_binary_gripper.zarr  
+# zarr_path: /scratch2/cross-emb/DP3_data/data_from_puru_no_eef_binary_gripper.zarr  
+
+dataset:
+  _target_: diffusion_policy_3d.dataset.rrc_dataset.RRCDataset
+  zarr_path: /scratch2/cross-emb/DP3_data/data_from_puru_no_eef.zarr  
+  horizon: ${horizon}
+  pad_before: ${eval:'${n_obs_steps}-1'}
+  pad_after: ${eval:'${n_action_steps}-1'}
+  seed: 42
+  val_ratio: 0.02
+  max_train_episodes: null
