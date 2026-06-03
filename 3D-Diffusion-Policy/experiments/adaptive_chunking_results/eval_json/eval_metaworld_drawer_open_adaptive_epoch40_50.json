@@ -1,0 +1,9 @@
+{
+  "episodes": 50,
+  "mean_policy_calls": 21.7,
+  "mean_selected_action_steps": 1.0613311688311686,
+  "mean_success_rates": 1.0,
+  "mean_traj_rewards": 10480.088296248163,
+  "n_overlap": 2,
+  "task": "drawer-open"
+}

@@ -9,6 +9,7 @@ from diffusion_policy_3d.gym_util.multistep_wrapper import MultiStepWrapper
 from diffusion_policy_3d.gym_util.video_recording_wrapper import SimpleVideoRecordingWrapper
 
 from diffusion_policy_3d.policy.base_policy import BasePolicy
+from diffusion_policy_3d.policy.adaptive_action import get_adaptive_metrics
 from diffusion_policy_3d.common.pytorch_util import dict_apply
 from diffusion_policy_3d.env_runner.base_runner import BaseRunner
 import diffusion_policy_3d.common.logger_util as logger_util
@@ -64,6 +65,9 @@ class DexArtRunner(BaseRunner):
 
         all_returns_train = []
         all_success_rates_train = []
+        all_policy_calls = []
+        all_mean_action_steps = []
+        all_adaptive_scores = []
 
 
         ##############################
@@ -111,6 +115,11 @@ class DexArtRunner(BaseRunner):
 
             all_returns_train.append(reward_sum)
             all_success_rates_train.append(env_train.is_success())
+            adaptive_metrics = get_adaptive_metrics(policy)
+            if adaptive_metrics:
+                all_policy_calls.append(adaptive_metrics['policy_calls'])
+                all_mean_action_steps.append(adaptive_metrics['mean_selected_action_steps'])
+                all_adaptive_scores.append(adaptive_metrics['mean_adaptive_score'])
 
        
 
@@ -123,6 +132,10 @@ class DexArtRunner(BaseRunner):
         log_data
         log_data['mean_success_rates_train'] = SR_mean_train
         log_data['mean_returns_train'] = returns_mean_train
+        if all_policy_calls:
+            log_data['mean_policy_calls'] = np.mean(all_policy_calls)
+            log_data['mean_selected_action_steps'] = np.mean(all_mean_action_steps)
+            log_data['mean_adaptive_score'] = np.mean(all_adaptive_scores)
 
         log_data['test_mean_score'] = SR_mean_train
 

@@ -407,6 +407,9 @@ class AdroitEnv:
     def set_env_state(self, state):
         self._env.set_env_state(state)
 
+    def get_env_state(self):
+        return self._env.get_env_state()
+
     def close(self):
         pass
 

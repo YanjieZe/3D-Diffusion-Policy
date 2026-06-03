@@ -74,12 +74,28 @@ def point_cloud_sampling(point_cloud:np.ndarray, num_points:int, method:str='uni
         point_cloud = point_cloud[sampled_indices]
     elif method == 'fps':
         # fast point cloud sampling using torch3d
-        point_cloud = torch.from_numpy(point_cloud).unsqueeze(0).cuda()
-        num_points = torch.tensor([num_points]).cuda()
-        # remember to only use coord to sample
-        _, sampled_indices = torch3d_ops.sample_farthest_points(points=point_cloud[...,:3], K=num_points)
-        point_cloud = point_cloud.squeeze(0).cpu().numpy()
-        point_cloud = point_cloud[sampled_indices.squeeze(0).cpu().numpy()]
+        try:
+            point_cloud_tensor = torch.from_numpy(point_cloud).unsqueeze(0).cuda()
+            num_points_tensor = torch.tensor([num_points]).cuda()
+            # remember to only use coord to sample
+            _, sampled_indices = torch3d_ops.sample_farthest_points(
+                points=point_cloud_tensor[...,:3], K=num_points_tensor)
+            point_cloud = point_cloud_tensor.squeeze(0).cpu().numpy()
+            point_cloud = point_cloud[sampled_indices.squeeze(0).cpu().numpy()]
+        except RuntimeError as e:
+            if "Not compiled with GPU support" not in str(e):
+                raise
+            xyz = point_cloud[:, :3]
+            sampled_indices = np.zeros(num_points, dtype=np.int64)
+            distances = np.full(point_cloud.shape[0], np.inf, dtype=np.float32)
+            farthest_idx = np.random.randint(point_cloud.shape[0])
+            for i in range(num_points):
+                sampled_indices[i] = farthest_idx
+                centroid = xyz[farthest_idx]
+                dist = np.sum((xyz - centroid) ** 2, axis=1)
+                distances = np.minimum(distances, dist)
+                farthest_idx = int(np.argmax(distances))
+            point_cloud = point_cloud[sampled_indices]
     else:
         raise NotImplementedError(f"point cloud sampling method {method} not implemented")
 
@@ -187,3 +203,8 @@ class MujocoPointcloudWrapperAdroit(gym.Wrapper):
         obs_dict['depth'] = depth
         return obs_dict
 
+    def get_env_state(self):
+        return self.env.get_env_state()
+
+    def set_env_state(self, state):
+        return self.env.set_env_state(state)

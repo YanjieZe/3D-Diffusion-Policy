@@ -152,7 +152,7 @@ class MetaWorldEnv(gym.Env):
                 mask = np.all(point_cloud[:, :3] < self.max_bound, axis=1)
                 point_cloud = point_cloud[mask]
 
-        point_cloud = point_cloud_sampling(point_cloud, self.num_points, 'fps')
+        point_cloud = point_cloud_sampling(point_cloud, self.num_points, 'uniform')
         
         depth = depth[::-1]
         
@@ -237,4 +237,3 @@ class MetaWorldEnv(gym.Env):
 
     def close(self):
         pass
-

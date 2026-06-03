@@ -39,6 +39,21 @@ policy:
   n_action_steps: ${n_action_steps}
   n_groups: 8
   n_obs_steps: ${n_obs_steps}
+  execution_mode: fixed # fixed, overlap, dynamic, overlap_dynamic, schedule, overlap_schedule, uncertainty, overlap_uncertainty, best_of_n, best_of_n_uncertainty, phase_mlp, branch_selector
+  min_action_steps: 1
+  mid_action_steps: 4
+  max_action_steps: ${n_action_steps}
+  low_threshold: 0.03
+  high_threshold: 0.08
+  overlap_alpha: 0.5
+  schedule_boundaries: [40, 70]
+  schedule_action_steps: [8, 4, 2]
+  uncertainty_samples: 1
+  phase_selector_path: null
+  phase_selector_steps: [8, 4, 2]
+  temporal_loss_weight: 0.0
+  temporal_loss_center: 0.55
+  temporal_loss_width: 0.10
 
   noise_scheduler:
     _target_: diffusers.schedulers.scheduling_ddim.DDIMScheduler

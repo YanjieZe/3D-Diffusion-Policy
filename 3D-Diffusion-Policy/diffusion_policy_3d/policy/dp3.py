@@ -17,6 +17,11 @@ from diffusion_policy_3d.model.diffusion.mask_generator import LowdimMaskGenerat
 from diffusion_policy_3d.common.pytorch_util import dict_apply
 from diffusion_policy_3d.common.model_util import print_params
 from diffusion_policy_3d.model.vision.pointnet_extractor import DP3Encoder
+from diffusion_policy_3d.policy.adaptive_action import (
+    init_adaptive_action_policy,
+    reset_adaptive_action_policy,
+    select_adaptive_action,
+)
 
 class DP3(BasePolicy):
     def __init__(self, 
@@ -40,6 +45,21 @@ class DP3(BasePolicy):
             use_pc_color=False,
             pointnet_type="pointnet",
             pointcloud_encoder_cfg=None,
+            execution_mode="fixed",
+            min_action_steps=1,
+            mid_action_steps=None,
+            max_action_steps=None,
+            low_threshold=0.03,
+            high_threshold=0.08,
+            overlap_alpha=0.5,
+            schedule_boundaries=None,
+            schedule_action_steps=None,
+            uncertainty_samples=1,
+            phase_selector_path=None,
+            phase_selector_steps=None,
+            temporal_loss_weight=0.0,
+            temporal_loss_center=0.55,
+            temporal_loss_width=0.10,
             # parameters passed to step
             **kwargs):
         super().__init__()
@@ -122,14 +142,35 @@ class DP3(BasePolicy):
         self.n_action_steps = n_action_steps
         self.n_obs_steps = n_obs_steps
         self.obs_as_global_cond = obs_as_global_cond
+        self.temporal_loss_weight = float(temporal_loss_weight)
+        self.temporal_loss_center = float(temporal_loss_center)
+        self.temporal_loss_width = float(temporal_loss_width)
         self.kwargs = kwargs
 
         if num_inference_steps is None:
             num_inference_steps = noise_scheduler.config.num_train_timesteps
         self.num_inference_steps = num_inference_steps
+        init_adaptive_action_policy(
+            self,
+            mode=execution_mode,
+            min_action_steps=min_action_steps,
+            mid_action_steps=mid_action_steps,
+            max_action_steps=max_action_steps,
+            low_threshold=low_threshold,
+            high_threshold=high_threshold,
+            overlap_alpha=overlap_alpha,
+            schedule_boundaries=schedule_boundaries,
+            schedule_action_steps=schedule_action_steps,
+            uncertainty_samples=uncertainty_samples,
+            phase_selector_path=phase_selector_path,
+            phase_selector_steps=phase_selector_steps,
+        )
 
 
         print_params(self)
+
+    def reset(self):
+        reset_adaptive_action_policy(self)
         
     # ========= inference  ============
     def conditional_sample(self, 
@@ -226,21 +267,53 @@ class DP3(BasePolicy):
             cond_mask[:,:To,Da:] = True
 
         # run sampling
-        nsample = self.conditional_sample(
-            cond_data, 
-            cond_mask,
-            local_cond=local_cond,
-            global_cond=global_cond,
-            **self.kwargs)
-        
+        if getattr(self, "execution_mode", "fixed") in (
+                "uncertainty", "overlap_uncertainty", "best_of_n",
+                "best_of_n_uncertainty"):
+            samples = []
+            for _ in range(int(getattr(self, "uncertainty_samples", 1))):
+                samples.append(self.conditional_sample(
+                    cond_data,
+                    cond_mask,
+                    local_cond=local_cond,
+                    global_cond=global_cond,
+                    **self.kwargs)[..., :Da])
+            naction_samples = torch.stack(samples, dim=0)
+            uncertainty_profile = torch.linalg.norm(
+                naction_samples.std(dim=0, unbiased=False), dim=-1)
+            if getattr(self, "execution_mode", "fixed") in (
+                    "best_of_n", "best_of_n_uncertainty"):
+                sample_mean = naction_samples.mean(dim=0, keepdim=True)
+                centrality = torch.linalg.norm(
+                    naction_samples - sample_mean, dim=-1).mean(dim=-1)
+                velocity = naction_samples[:, :, 1:] - naction_samples[:, :, :-1]
+                smoothness = torch.linalg.norm(velocity, dim=-1).mean(dim=-1)
+                score = centrality + 0.25 * smoothness
+                best_idx = torch.argmin(score, dim=0)
+                gather_idx = best_idx.view(1, B, 1, 1).expand(1, B, T, Da)
+                naction_pred = torch.gather(naction_samples, 0, gather_idx).squeeze(0)
+            else:
+                naction_pred = naction_samples.mean(dim=0)
+        else:
+            nsample = self.conditional_sample(
+                cond_data,
+                cond_mask,
+                local_cond=local_cond,
+                global_cond=global_cond,
+                **self.kwargs)
+            naction_pred = nsample[..., :Da]
+            uncertainty_profile = None
+
         # unnormalize prediction
-        naction_pred = nsample[...,:Da]
         action_pred = self.normalizer['action'].unnormalize(naction_pred)
 
         # get action
         start = To - 1
-        end = start + self.n_action_steps
-        action = action_pred[:,start:end]
+        phase_obs = nobs["agent_pos"][:, To - 1] if "agent_pos" in nobs else None
+        action_result = select_adaptive_action(
+            self, action_pred, start, uncertainty_profile=uncertainty_profile,
+            phase_obs=phase_obs)
+        action = action_result['action']
         
         # get prediction
 
@@ -248,6 +321,8 @@ class DP3(BasePolicy):
         result = {
             'action': action,
             'action_pred': action_pred,
+            'action_steps': action_result['action_steps'],
+            'adaptive_score': action_result['adaptive_score'],
         }
         
         return result
@@ -359,6 +434,13 @@ class DP3(BasePolicy):
         loss = F.mse_loss(pred, target, reduction='none')
         loss = loss * loss_mask.type(loss.dtype)
         loss = reduce(loss, 'b ... -> b (...)', 'mean')
+        if self.temporal_loss_weight > 0 and 'sample_progress' in batch:
+            progress = batch['sample_progress'].to(device=loss.device, dtype=loss.dtype)
+            progress = progress.reshape(loss.shape[0])
+            width = max(self.temporal_loss_width, 1e-6)
+            phase_gate = torch.sigmoid((progress - self.temporal_loss_center) / width)
+            weights = 1.0 + self.temporal_loss_weight * phase_gate
+            loss = loss * weights.unsqueeze(-1)
         loss = loss.mean()
         
 
@@ -373,4 +455,3 @@ class DP3(BasePolicy):
         # print(f"t6-t5: {t6-t5:.3f}")
         
         return loss, loss_dict
-

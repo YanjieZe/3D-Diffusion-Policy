@@ -1,0 +1,9 @@
+{
+  "episodes": 50,
+  "mean_policy_calls": 20.94,
+  "mean_selected_action_steps": 1.0653463203463205,
+  "mean_success_rates": 1.0,
+  "mean_traj_rewards": 12365.149428200484,
+  "n_overlap": 2,
+  "task": "door-close"
+}

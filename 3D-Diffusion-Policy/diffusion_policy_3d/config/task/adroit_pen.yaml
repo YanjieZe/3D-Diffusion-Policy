@@ -24,6 +24,7 @@ env_runner:
   max_steps: 300
   n_obs_steps: ${n_obs_steps}
   n_action_steps: ${n_action_steps}
+  n_overlap: ${policy.n_overlap}
   fps: 10
   task_name: pen
   render_size: 84

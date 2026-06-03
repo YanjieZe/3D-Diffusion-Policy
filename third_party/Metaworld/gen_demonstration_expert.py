@@ -84,7 +84,8 @@ def main(args):
 		action_arrays_sub = []
 		total_count_sub = 0
   
-		while not done:
+		step_count = 0
+		while not done and step_count < args.max_steps:
 
 			total_count_sub += 1
 			
@@ -106,6 +107,7 @@ def main(args):
 			obs_dict, reward, done, info = e.step(action)
 			raw_state = obs_dict['full_state']
 			ep_reward += reward
+			step_count += 1
    
 
 			ep_success = ep_success or info['success']
@@ -188,6 +190,7 @@ if __name__ == "__main__":
 	parser.add_argument('--env_name', type=str, default='basketball')
 	parser.add_argument('--num_episodes', type=int, default=10)
 	parser.add_argument('--root_dir', type=str, default="../../3D-Diffusion-Policy/data/" )
+	parser.add_argument('--max_steps', type=int, default=500)
 
 	args = parser.parse_args()
 	main(args)

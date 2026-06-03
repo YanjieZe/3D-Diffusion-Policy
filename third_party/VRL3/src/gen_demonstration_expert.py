@@ -27,6 +27,10 @@ def parse_args():
     parser.add_argument('--img_size', type=int, default=84, help='image size')
     parser.add_argument('--not_use_multi_view', action='store_true', help='not use multi view')
     parser.add_argument('--use_point_crop', action='store_true', help='use point crop')
+    parser.add_argument('--min_goal_achieved', type=float, default=10.0,
+                        help='minimum goal-achieved count required to keep an episode')
+    parser.add_argument('--output_name', type=str, default=None,
+                        help='optional zarr directory name under root_dir')
     args = parser.parse_args()
     return args
 
@@ -52,7 +56,8 @@ def main():
         env = MujocoPointcloudWrapperAdroit(env=env, env_name='adroit_'+args.env_name, use_point_crop=args.use_point_crop)
         return env
     num_episodes = args.num_episodes
-    save_dir = os.path.join(args.root_dir, 'adroit_'+args.env_name+'_expert.zarr')
+    output_name = args.output_name or ('adroit_'+args.env_name+'_expert.zarr')
+    save_dir = os.path.join(args.root_dir, output_name)
     if os.path.exists(save_dir):
         cprint('Data already exists at {}'.format(save_dir), 'red')
         cprint("If you want to overwrite, delete the existing directory first.", "red")
@@ -134,7 +139,7 @@ def main():
             total_reward += time_step.reward
             step_count += 1
             
-        if n_goal_achieved_total < 10.:
+        if n_goal_achieved_total < args.min_goal_achieved:
             cprint(f"Episode {episode_idx} has {n_goal_achieved_total} goals achieved and {total_reward} reward. Discarding.", 'red')
         else:
             total_count += total_count_sub

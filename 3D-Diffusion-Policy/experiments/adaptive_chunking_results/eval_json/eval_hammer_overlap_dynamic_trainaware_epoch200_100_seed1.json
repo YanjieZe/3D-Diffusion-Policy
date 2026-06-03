@@ -1,0 +1,11 @@
+{
+  "episodes": 100,
+  "execution_mode": "fixed",
+  "mean_branch_selector_confidence": 0.0,
+  "mean_n_goal_achieved": 18.21,
+  "mean_policy_calls": 9.92,
+  "mean_selected_action_steps": 8.0,
+  "mean_success_rates": 0.99,
+  "n_overlap": 2,
+  "task": "hammer"
+}

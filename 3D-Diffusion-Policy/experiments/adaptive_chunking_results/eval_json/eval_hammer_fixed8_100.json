@@ -1,0 +1,10 @@
+{
+  "episodes": 100,
+  "execution_mode": "fixed",
+  "mean_branch_selector_confidence": 0.0,
+  "mean_n_goal_achieved": 22.43,
+  "mean_policy_calls": 13.0,
+  "mean_selected_action_steps": 8.0,
+  "mean_success_rates": 0.91,
+  "task": "hammer"
+}

@@ -8,6 +8,7 @@ from diffusion_policy_3d.gym_util.multistep_wrapper import MultiStepWrapper
 from diffusion_policy_3d.gym_util.video_recording_wrapper import SimpleVideoRecordingWrapper
 
 from diffusion_policy_3d.policy.base_policy import BasePolicy
+from diffusion_policy_3d.policy.adaptive_action import get_adaptive_metrics
 from diffusion_policy_3d.common.pytorch_util import dict_apply
 from diffusion_policy_3d.env_runner.base_runner import BaseRunner
 import diffusion_policy_3d.common.logger_util as logger_util
@@ -20,6 +21,7 @@ class MetaworldRunner(BaseRunner):
                  max_steps=1000,
                  n_obs_steps=8,
                  n_action_steps=8,
+                 n_overlap=0,
                  fps=10,
                  crf=22,
                  render_size=84,
@@ -53,6 +55,7 @@ class MetaworldRunner(BaseRunner):
         self.crf = crf
         self.n_obs_steps = n_obs_steps
         self.n_action_steps = n_action_steps
+        self.n_overlap = int(n_overlap)
         self.max_steps = max_steps
         self.tqdm_interval_sec = tqdm_interval_sec
 
@@ -65,6 +68,9 @@ class MetaworldRunner(BaseRunner):
 
         all_traj_rewards = []
         all_success_rates = []
+        all_policy_calls = []
+        all_mean_action_steps = []
+        all_adaptive_scores = []
         env = self.env
 
         
@@ -73,6 +79,9 @@ class MetaworldRunner(BaseRunner):
             # start rollout
             obs = env.reset()
             policy.reset()
+            if self.n_overlap > 0:
+                policy.n_overlap = self.n_overlap
+            committed = None
 
             done = False
             traj_reward = 0
@@ -87,11 +96,36 @@ class MetaworldRunner(BaseRunner):
                     obs_dict_input = {}
                     obs_dict_input['point_cloud'] = obs_dict['point_cloud'].unsqueeze(0)
                     obs_dict_input['agent_pos'] = obs_dict['agent_pos'].unsqueeze(0)
-                    action_dict = policy.predict_action(obs_dict_input)
+                    leftover = None
+                    if committed is not None:
+                        leftover = torch.from_numpy(committed).to(
+                            device=device, dtype=dtype).unsqueeze(0)
+                    action_dict = policy.predict_action(
+                        obs_dict_input, leftover_actions=leftover)
 
                 np_action_dict = dict_apply(action_dict,
                                             lambda x: x.detach().to('cpu').numpy())
-                action = np_action_dict['action'].squeeze(0)
+                if self.n_overlap > 0:
+                    start = int(action_dict['action_start'][0].detach().cpu())
+                    output = action_dict['action_pred'][:, start:].detach().cpu().numpy().squeeze(0)
+                    n_fresh_value = action_dict.get('n_fresh')
+                    if n_fresh_value is None:
+                        n_fresh = max(self.n_action_steps - self.n_overlap, 1)
+                    else:
+                        n_fresh = int(n_fresh_value[0].detach().cpu())
+                    if committed is None:
+                        n_fresh = min(n_fresh, max(len(output) - self.n_overlap, 1))
+                        action = output[:n_fresh]
+                        committed = output[n_fresh:n_fresh + self.n_overlap]
+                    else:
+                        fresh = output[len(committed):]
+                        n_fresh = min(n_fresh, len(fresh))
+                        action = np.concatenate([committed, fresh[:n_fresh]], axis=0)
+                        committed = fresh[n_fresh:n_fresh + self.n_overlap]
+                        if len(committed) == 0:
+                            committed = None
+                else:
+                    action = np_action_dict['action'].squeeze(0)
 
                 obs, reward, done, info = env.step(action)
 
@@ -102,6 +136,11 @@ class MetaworldRunner(BaseRunner):
 
             all_success_rates.append(is_success)
             all_traj_rewards.append(traj_reward)
+            adaptive_metrics = get_adaptive_metrics(policy)
+            if adaptive_metrics:
+                all_policy_calls.append(adaptive_metrics['policy_calls'])
+                all_mean_action_steps.append(adaptive_metrics['mean_selected_action_steps'])
+                all_adaptive_scores.append(adaptive_metrics['mean_adaptive_score'])
             
 
         max_rewards = collections.defaultdict(list)
@@ -111,6 +150,10 @@ class MetaworldRunner(BaseRunner):
         log_data['mean_success_rates'] = np.mean(all_success_rates)
 
         log_data['test_mean_score'] = np.mean(all_success_rates)
+        if all_policy_calls:
+            log_data['mean_policy_calls'] = np.mean(all_policy_calls)
+            log_data['mean_selected_action_steps'] = np.mean(all_mean_action_steps)
+            log_data['mean_adaptive_score'] = np.mean(all_adaptive_scores)
         
         cprint(f"test_mean_score: {np.mean(all_success_rates)}", 'green')
 

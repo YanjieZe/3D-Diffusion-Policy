@@ -86,6 +86,13 @@ class AdroitDataset(BaseDataset):
     def __getitem__(self, idx: int) -> Dict[str, torch.Tensor]:
         sample = self.sampler.sample_sequence(idx)
         data = self._sample_to_data(sample)
+        buffer_start_idx = int(self.sampler.indices[idx][0])
+        episode_ends = self.replay_buffer.episode_ends[:]
+        episode_idx = int(np.searchsorted(episode_ends, buffer_start_idx, side='right'))
+        episode_start = 0 if episode_idx == 0 else int(episode_ends[episode_idx - 1])
+        episode_end = int(episode_ends[episode_idx])
+        episode_len = max(1, episode_end - episode_start - 1)
+        progress = (buffer_start_idx - episode_start) / episode_len
+        data['sample_progress'] = np.array([progress], dtype=np.float32)
         torch_data = dict_apply(data, torch.from_numpy)
         return torch_data
-

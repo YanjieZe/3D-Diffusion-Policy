@@ -1,0 +1,9 @@
+{
+  "episodes": 50,
+  "mean_policy_calls": 19.56,
+  "mean_selected_action_steps": 1.0,
+  "mean_success_rates": 0.7,
+  "mean_traj_rewards": 5324.944227707501,
+  "n_overlap": 2,
+  "task": "button-press-topdown"
+}

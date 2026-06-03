@@ -1,0 +1,9 @@
+{
+  "episodes": 50,
+  "mean_policy_calls": 18.26,
+  "mean_selected_action_steps": 1.0,
+  "mean_success_rates": 1.0,
+  "mean_traj_rewards": 8042.822004896206,
+  "n_overlap": 2,
+  "task": "window-close"
+}
