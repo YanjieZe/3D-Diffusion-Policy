@@ -3,6 +3,28 @@ import collections
 import torch
 import torch.nn as nn
 
+
+def masked_mean(value: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
+    """Return a per-sample mean over the entries selected by ``mask``.
+
+    Diffusion inpainting losses mask out observed dimensions.  Reducing the
+    masked tensor with a regular mean still divides by the *unmasked* tensor
+    size, making the effective objective depend on how many dimensions are
+    conditioned.  This helper keeps each sample's loss scale independent of
+    that mask and handles an all-conditioned sample without NaNs.
+    """
+
+    if value.shape != mask.shape:
+        raise ValueError(
+            "value and mask must have identical shapes: "
+            f"got value={tuple(value.shape)}, mask={tuple(mask.shape)}"
+        )
+    value_flat = value.reshape(value.shape[0], -1)
+    mask_flat = mask.to(dtype=value.dtype).reshape(value.shape[0], -1)
+    denominator = mask_flat.sum(dim=1).clamp_min(1.0)
+    return (value_flat * mask_flat).sum(dim=1) / denominator
+
+
 def dict_apply(
         x: Dict[str, torch.Tensor], 
         func: Callable[[torch.Tensor], torch.Tensor]

@@ -3,7 +3,7 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from einops import rearrange, reduce
+from einops import rearrange
 from diffusers.schedulers.scheduling_ddpm import DDPMScheduler
 from termcolor import cprint
 import copy
@@ -14,7 +14,7 @@ from diffusion_policy_3d.model.common.normalizer import LinearNormalizer
 from diffusion_policy_3d.policy.base_policy import BasePolicy
 from diffusion_policy_3d.model.diffusion.conditional_unet1d import ConditionalUnet1D
 from diffusion_policy_3d.model.diffusion.mask_generator import LowdimMaskGenerator
-from diffusion_policy_3d.common.pytorch_util import dict_apply
+from diffusion_policy_3d.common.pytorch_util import dict_apply, masked_mean
 from diffusion_policy_3d.common.model_util import print_params
 from diffusion_policy_3d.model.vision.pointnet_extractor import DP3Encoder
 
@@ -147,7 +147,8 @@ class DP3(BasePolicy):
         trajectory = torch.randn(
             size=condition_data.shape, 
             dtype=condition_data.dtype,
-            device=condition_data.device)
+            device=condition_data.device,
+            generator=generator)
 
         # set step values
         scheduler.set_timesteps(self.num_inference_steps)
@@ -358,8 +359,7 @@ class DP3(BasePolicy):
 
         loss = F.mse_loss(pred, target, reduction='none')
         loss = loss * loss_mask.type(loss.dtype)
-        loss = reduce(loss, 'b ... -> b (...)', 'mean')
-        loss = loss.mean()
+        loss = masked_mean(loss, loss_mask).mean()
         
 
         loss_dict = {
